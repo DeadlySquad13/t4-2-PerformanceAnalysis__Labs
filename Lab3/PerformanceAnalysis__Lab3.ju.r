@@ -1,23 +1,47 @@
+# %% [markdown]
+# # Лабораторная работа 3. Модель однофазной одноканальной замкнутой системы обслуживания
+# ## Задание 1
+
 # %%
 variant <- 5
 set.seed(variant)
+
 k <- sample(c(4:9), 1)
+
 pp1 <- runif(4)
 pp2 <- runif(3)
 pp3 <- runif(2)
+
 p1 <- pp1 / sum(pp1)
 p2 <- c(c(0), pp2 / sum(pp2))
 p3 <- c(c(0, 0), pp3 / sum(pp3))
 p4 <- c(0, 0, 0, 1)
+
 P <- data.frame()
-P <- rbind(P, p1)
-P <- rbind(P, p2)
-P <- rbind(P, p3)
-P <- rbind(P, p4)
+
+P <- rbind(P, p1, p2, p3, p4)
+
 rownames(P) <- c("p1", "p2", "p3", "p4")
 colnames(P) <- c("", "", "", "")
+
 View(P)
+
 print(paste("k =", as.character(k)))
+
+# %% [markdown]
+# ### Численно
+# Симулируем проход по матрице переходных вероятностей для трех сценариев:
+# 1. k - 2 осмотров,
+# 2. k - 1 осмотров,
+# 3. k осмотров.
+
+# Выполнив эту операцию N раз для каждого сценария, получим три вектора,
+# содержащие N состояний. Это состояния, в которых оставалась модель после
+# симуляции:
+# $$
+#   Scenario_i = \{State_1 ... State_N\}, i \in \{1, 2, 3\}, \\
+#   State \in \{S1, S2, S3, S4\}
+# $$
 
 # %%
 # Получаем значение, соответствующее отрезку.
@@ -67,16 +91,19 @@ test_walk <- function(first_state, k) {
 }
 
 # %%
-first_state <- 1
+first_state <- 1 # Выбрали произвольное.
 
 # %%
-S1 <- test_walk(first_state, k - 2)
+Scenario1 <- test_walk(first_state, k - 2)
 
 # %%
-S2 <- test_walk(first_state, k - 1)
+Scenario2 <- test_walk(first_state, k - 1)
 
 # %%
-S3 <- test_walk(first_state, k)
+Scenario3 <- test_walk(first_state, k)
+
+# %% [markdown]
+# В полученных сценариях посчитаем вероятности получения каждого состояния.
 
 # %%
 get_probability <- function(States, state) {
@@ -89,18 +116,31 @@ get_probability <- function(States, state) {
 # %%
 get_probabilities_to_stay <- function(States) {
     return(
-        lapply(seq_along(P), function(state) get_probability(States, state))
+        unlist(
+            lapply(seq_along(P), function(state) get_probability(States, state))
+        )
     )
 }
 
 # %%
-get_probabilities_to_stay(S1)
+Scenario1Propabilities <- get_probabilities_to_stay(Scenario1)
 
 # %%
-get_probabilities_to_stay(S2)
+Scenario2Propabilities <- get_probabilities_to_stay(Scenario2)
 
 # %%
-get_probabilities_to_stay(S3)
+Scenario3Propabilities <- get_probabilities_to_stay(Scenario3)
+
+# %%
+results <- data.frame(
+    Scenario1Propabilities,
+    Scenario2Propabilities,
+    Scenario3Propabilities
+)
+colnames(results) <- c("k - 2", "k - 1", "k")
+rownames(results) <- rownames(P)
+
+results
 
 # %% [markdown]
 # # Задание 2
