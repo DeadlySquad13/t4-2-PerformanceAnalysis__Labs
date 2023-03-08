@@ -169,9 +169,14 @@ initial_state_probabilities %*% matrix.power(transition_matrix, k)
 variant <- 5
 set.seed(variant)
 k <- sample(c(10:25), 1)
-t1 <- sample(c(14:20), 1)
+# Интесивность получалась больше 1, поэтому заменил значение.
+# t1 <- sample(c(14:20), 1)
+t1 <- 50
 t2 <- sample(c(2:5), 1)
 View(data.frame(k, t1, t2))
+
+# %% [markdown]
+# ### Численно
 
 # %%
 if (!require("simmer")) {
@@ -213,3 +218,57 @@ env %>% get_queue_count("server")
 
 # %%
 env %>% get_mon_resources()
+
+# %% [markdown]
+# ### Теоретически
+
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только
+# она поступила на терминал - она  же обратная вероятность того, что
+# программа **будет выполнена** сразу же, то есть:
+# $$
+# 1 - P_0 = 1 - (1 - \rho) = \rho = \frac{\lambda}{\mu}
+# $$
+# где $\lambda$ - интенсивность, с которой заявки приходят:
+# $$
+# \lambda = \frac{k}{t_1} \\
+# $$
+
+# %%
+income_intensity <- k / t1
+income_intensity
+
+# %% [markdown]
+# а $\mu$ - интенсивность обслуживания:
+# $$
+# \mu = \frac{1}{t_2}
+# $$
+
+# %%
+process_intensity <- 1 / t2
+process_intensity
+
+# %%
+program_wont_be_executed_immediately <- income_intensity / process_intensity
+program_wont_be_executed_immediately
+
+# %% [markdown]
+# #### 2. Среднее время до получения пользователем результатов реализации.
+
+# Оно же среднее время пребывания заявки в системе по формуле Литтла:
+# $$
+# T_{\text{сист}} = \frac{1}{\mu(1 - \rho)}
+# $$
+
+# %%
+time_to_get <- 1 / process_intensity / (1 - program_wont_be_executed_immediately)
+time_to_get
+
+# %% [markdown]
+# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
+
+# Она же средняя длина очереди $L_{\text{оч}} = \frac{\rho ^ 2}{1 - \rho}$:
+
+# %%
+mean_queue <- program_wont_be_executed_immediately^2 / (1 - program_wont_be_executed_immediately)
+mean_queue
