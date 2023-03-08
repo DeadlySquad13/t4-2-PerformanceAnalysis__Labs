@@ -79,7 +79,7 @@ walk <- function(starting_state, times) {
 }
 
 # %%
-N <- 1000
+N <- 10000
 test_walk <- function(first_state, k) {
     results <- c()
 
@@ -141,6 +141,26 @@ colnames(results) <- c("k - 2", "k - 1", "k")
 rownames(results) <- rownames(P)
 
 results
+
+# %% [markdown]
+# ### Теоретически
+
+# %%
+initial_state_probabilities <- c(1, 0, 0, 0)
+transition_matrix <- data.matrix(P)
+transition_matrix
+
+# %%
+if (!require("matrixcalc")) {
+    install.packages("matrixcalc")
+}
+
+initial_state_probabilities %*% matrix.power(transition_matrix, k)
+
+# %% [markdown]
+# Как видно, теоретически вычисленная матрица с некоторой точностью совпадает
+# со значениями, полученными теоретически. При увеличении количества
+# экспериментов $N$ точность только увеличивается.
 
 # %% [markdown]
 # # Задание 2
