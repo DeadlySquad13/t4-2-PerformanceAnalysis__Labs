@@ -75,7 +75,7 @@ make_step <- function(current_state) {
 
 # %%
 walk <- function(starting_state, times) {
-    if (times < 0) {
+    if (times == 0) {
         return(starting_state)
     }
 
@@ -184,13 +184,16 @@ View(data.frame(k, t1, t2))
 # %% [markdown]
 # ### Численно
 
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал
+# она  же обратная вероятность того, что
+# программа **будет выполнена** сразу же, то есть:
+
 # %%
 if (!require("simmer")) {
     install.packages("simmer")
 }
 library(simmer)
-
-set.seed(42)
 
 env <- simmer("SuperDuperSim")
 env
@@ -199,38 +202,39 @@ env
 programmers <- trajectory("programmers' path") %>%
     ## add an intake activity
     seize("server", 1) %>%
-    timeout(function() rnorm(1, 5)) %>%
+    timeout(function() rexp(1, 1 / t2)) %>%
     release("server", 1)
 
 # %%
 env %>%
     add_resource("server", 1) %>%
-    add_generator("programmers", programmers, function() {
-        return(10)
-    })
+    add_generator("programmers", programmers, function() rexp(1, k / t1))
 # , function() rnorm(1, 0.1, 2))
 
 # %%
 env %>%
-    run(50) %>%
-    now()
-env %>% peek(3)
+    reset() %>%
+    run(500)
 
 # %%
-env %>% get_n_generated("programmers")
+df <- env %>% get_mon_resources()
+df
 
 # %%
-env %>% get_queue_count("server")
+queue <- df$queue
+income_count <- length(queue)
+programs_held <- length(queue[queue != 0])
 
 # %%
-env %>% get_mon_resources()
+program_wont_be_executed_immediately <- programs_held / income_count
+program_wont_be_executed_immediately
 
 # %% [markdown]
 # ### Теоретически
 
 # %% [markdown]
-# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только
-# она поступила на терминал - она  же обратная вероятность того, что
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал
+# она  же обратная вероятность того, что
 # программа **будет выполнена** сразу же, то есть:
 # $$
 # 1 - P_0 = 1 - (1 - \rho) = \rho = \frac{\lambda}{\mu}
