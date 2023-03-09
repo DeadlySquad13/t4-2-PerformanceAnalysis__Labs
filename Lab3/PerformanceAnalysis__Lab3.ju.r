@@ -161,6 +161,12 @@ if (!require("matrixcalc")) {
     install.packages("matrixcalc")
 }
 
+initial_state_probabilities %*% matrix.power(transition_matrix, k - 2)
+
+# %%
+initial_state_probabilities %*% matrix.power(transition_matrix, k - 1)
+
+# %%
 initial_state_probabilities %*% matrix.power(transition_matrix, k)
 
 # %% [markdown]
@@ -177,7 +183,7 @@ set.seed(variant)
 k <- sample(c(10:25), 1)
 # Интесивность получалась больше 1, поэтому заменил значение.
 # t1 <- sample(c(14:20), 1)
-t1 <- 50
+t1 <- 100
 t2 <- sample(c(2:5), 1)
 View(data.frame(k, t1, t2))
 
@@ -209,25 +215,53 @@ programmers <- trajectory("programmers' path") %>%
 env %>%
     add_resource("server", 1) %>%
     add_generator("programmers", programmers, function() rexp(1, k / t1))
-# , function() rnorm(1, 0.1, 2))
 
 # %%
 env %>%
     reset() %>%
-    run(500)
+    run(1000000)
 
 # %%
-df <- env %>% get_mon_resources()
-df
+activities <- env %>% get_mon_arrivals()
+activities
 
 # %%
-queue <- df$queue
-income_count <- length(queue)
-programs_held <- length(queue[queue != 0])
+resources <- env %>% get_mon_resources()
+resources
+
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал
+# она  же обратная вероятность того, что
+# программа **будет выполнена** сразу же, то есть:
 
 # %%
-program_wont_be_executed_immediately <- programs_held / income_count
+EPS <- 0.0001 # Должно быть 0, но в модели присутствуют некоторые погрешности.
+queue <- resources$queue
+income_count <- length(activities$name)
+programs_starts <- length(
+    subset(activities, (activities$end_time - activities$start_time - activities$activity_time) > EPS)$name
+)
+
+programs_starts
+income_count
+
+# %%
+program_wont_be_executed_immediately <- programs_starts / income_count
 program_wont_be_executed_immediately
+
+# %% [markdown]
+# #### 2. Среднее время до получения пользователем результатов реализации.
+
+# %%
+finished_activity_time <- mean(activities$end_time - activities$start_time)
+finished_activity_time
+
+# %% [markdown]
+# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
+
+# %%
+mean_queue <- program_wont_be_executed_immediately^2 / (1 - program_wont_be_executed_immediately)
+mean_queue
 
 # %% [markdown]
 # ### Теоретически
@@ -282,3 +316,6 @@ time_to_get
 # %%
 mean_queue <- program_wont_be_executed_immediately^2 / (1 - program_wont_be_executed_immediately)
 mean_queue
+
+# %% [markdown]
+# Как видно, все значения сошлись.
