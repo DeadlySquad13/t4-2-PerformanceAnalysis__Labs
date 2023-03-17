@@ -67,30 +67,30 @@ get_value_in_range <- function(v, X, p) {
 
 
 # %%
-make_step <- function(current_state) {
-    possible_states <- P[current_state, ]
+make_step <- function(current_state, transition_matrix) {
+    possible_states <- transition_matrix[current_state, ]
 
-    return(get_value_in_range(runif(1), 1:4, possible_states))
+    return(get_value_in_range(runif(1), seq_along(transition_matrix), possible_states))
 }
 
 # %%
-walk <- function(starting_state, times) {
+walk <- function(starting_state, times, transition_matrix) {
     if (times == 0) {
         return(starting_state)
     }
 
-    next_state <- make_step(starting_state)
+    next_state <- make_step(starting_state, transition_matrix)
 
-    return(walk(next_state, times - 1))
+    return(walk(next_state, times - 1, transition_matrix))
 }
 
 # %%
 N <- 10000
-test_walk <- function(first_state, k) {
+test_walk <- function(first_state, k, transition_matrix) {
     results <- c()
 
     for (i in 1:N) {
-        results <- append(results, walk(first_state, k))
+        results <- append(results, walk(first_state, k, transition_matrix))
     }
 
     return(results)
@@ -100,13 +100,13 @@ test_walk <- function(first_state, k) {
 first_state <- 1 # Выбрали произвольное.
 
 # %%
-Scenario1 <- test_walk(first_state, k - 2)
+Scenario1 <- test_walk(first_state, k - 2, P)
 
 # %%
-Scenario2 <- test_walk(first_state, k - 1)
+Scenario2 <- test_walk(first_state, k - 1, P)
 
 # %%
-Scenario3 <- test_walk(first_state, k)
+Scenario3 <- test_walk(first_state, k, P)
 
 # %% [markdown]
 # В полученных сценариях посчитаем вероятности получения каждого состояния.
@@ -120,22 +120,28 @@ get_probability <- function(States, state) {
 }
 
 # %%
-get_probabilities_to_stay <- function(States) {
+get_probabilities_to_stay <- function(States, transition_matrix) {
     return(
         unlist(
-            lapply(seq_along(P), function(state) get_probability(States, state))
+            lapply(
+                seq_along(transition_matrix), function(state) get_probability(States, state)
+            )
         )
     )
 }
 
 # %%
-Scenario1Propabilities <- get_probabilities_to_stay(Scenario1)
+Scenario1Propabilities <- get_probabilities_to_stay(Scenario1, P)
 
 # %%
-Scenario2Propabilities <- get_probabilities_to_stay(Scenario2)
+Scenario2Propabilities <- get_probabilities_to_stay(Scenario2, P)
 
 # %%
-Scenario3Propabilities <- get_probabilities_to_stay(Scenario3)
+Scenario3Propabilities <- get_probabilities_to_stay(Scenario3, P)
+
+# %% [markdown]
+# Получим следующие результаты. Каждый столбец хранит вероятности остаться
+# в той или иной вершине. Первый столбец для $k - 2$, второй - $k - 1$, третий - для $k$ проходов.
 
 # %%
 results <- data.frame(
@@ -346,8 +352,9 @@ View(data.frame(p1, p2, p3, k, m))
 
 # %% [markdown]
 # Иными словами, она не должна остаться в 0, 1 или -1.
-# Для этого составим матрицу переходов. Всего в ней будет $1 + 2 \cdot k$
-# столбцов.
+# Для этого составим матрицу переходов. Мы можем максимум уйти за k переходов либо на k единиц влево, либо
+# на k единиц вправо. Добавляя к этому еще точку 0, с которой мы начинаем,
+# получаем максимум $1 + 2 \cdot k$ состояний (строк и столбцов).
 
 # %% [markdown]
 # \begin{pmatrix}
@@ -357,7 +364,9 @@ View(data.frame(p1, p2, p3, k, m))
 # 0 & L & 0 & S &  ... & & ... \\
 # 0 & 0 & R & ... &  ... & &  L \text{ или } R^1 \\
 # ... & ... & ... & & & & 0 \\
-# 0 & 0 & ... & 0 & R \text{ или } L^1 & 0 & S
+# 0 & 0 & ... & 0 & R \text{ или } L^1 & 0 & S \\
+# 0 & 0 & ... & ... & 0 & 1 & 0 \\
+# 0 & 0 & ... & ... & 0 & 0 & 1
 # \end{pmatrix}
 
 # ---
@@ -366,33 +375,66 @@ View(data.frame(p1, p2, p3, k, m))
 # R - вероятность переместиться вправо,
 # 1. Зависит от четности количества столбцов
 
+# %% [markdown]
+# ### Теоретически
+# По составленной матрице аналогично первому заданию можно подсчитать
+# вероятность остаться в той или иной точке прямой.
+
 # %%
 initial_state_probabilities <- c(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
+# %%
 transition_matrix <- data.frame()
-rbind(
-    transition_matrix,
-    c(S, R, L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-    c(L, S, 0, R, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-    c(R, 0, S, 0, L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-    c(0, L, 0, S, 0, R, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-    c(0, 0, R, 0, S, 0, L, 0, 0, 0, 0, 0, 0, 0, 0),
-    c(0, 0, 0, L, 0, S, 0, R, 0, 0, 0, 0, 0, 0, 0),
-    c(0, 0, 0, 0, R, 0, S, 0, L, 0, 0, 0, 0, 0, 0),
-    c(0, 0, 0, 0, 0, L, 0, S, 0, R, 0, 0, 0, 0, 0),
-    c(0, 0, 0, 0, 0, 0, R, 0, S, 0, L, 0, 0, 0, 0),
-    c(0, 0, 0, 0, 0, 0, 0, L, 0, S, 0, R, 0, 0, 0),
-    c(0, 0, 0, 0, 0, 0, 0, 0, R, 0, S, 0, L, 0, 0),
-    c(0, 0, 0, 0, 0, 0, 0, 0, 0, L, 0, S, 0, R, 0),
-    c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, R, 0, S, 0, L),
-    c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L, 0, 1, 0),
-    c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, R, 0, 1)
+
+transition_matrix <- rbind(
+    c(S, R, L, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    c(L, S, 0, R, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    c(R, 0, S, 0, L, 0, 0, 0, 0, 0, 0, 0, 0),
+    c(0, L, 0, S, 0, R, 0, 0, 0, 0, 0, 0, 0),
+    c(0, 0, R, 0, S, 0, L, 0, 0, 0, 0, 0, 0),
+    c(0, 0, 0, L, 0, S, 0, R, 0, 0, 0, 0, 0),
+    c(0, 0, 0, 0, R, 0, S, 0, L, 0, 0, 0, 0),
+    c(0, 0, 0, 0, 0, L, 0, S, 0, R, 0, 0, 0),
+    c(0, 0, 0, 0, 0, 0, R, 0, S, 0, L, 0, 0),
+    c(0, 0, 0, 0, 0, 0, 0, L, 0, S, 0, R, 0),
+    c(0, 0, 0, 0, 0, 0, 0, 0, R, 0, S, 0, L),
+    c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0),
+    c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
 )
+transition_matrix
 
 # %%
 if (!require("matrixcalc")) {
     install.packages("matrixcalc")
 }
 
-kek <- initial_state_probabilities %*% matrix.power(data.matrix(transition_matrix), k)
-kek
+probabilities <- initial_state_probabilities %*% matrix.power(data.matrix(transition_matrix), k)
+probabilities
+
+# %% [markdown]
+# Вероятность не выйти за m единиц - вероятность остаться в 0 или 1, то есть
+# сумма первых трёх ячеек полученной матрицы (они соответствуют вероятностям попасть в 0, 1 и -1 соответственно):
+
+# %%
+probabilities[1] + probabilities[2] + probabilities[3]
+
+# %% [markdown]
+# ### Численно
+# Численный метод тоже не отличается от основного задания лабораторной работы.
+# Воспользуемся уже ранее задаными функциями для вычисления вероятностей.
+
+# %%
+Scenario <- test_walk(initial_state_probabilities, k, transition_matrix)
+# seq_along works differently with matrix.
+probabilities <- get_probabilities_to_stay(Scenario, data.frame(transition_matrix))
+
+probabilities
+
+# %%
+probabilities[1] + probabilities[2] + probabilities[3]
+
+# %% [markdown]
+# ### Итого
+# Как видно, теоретически вычисленное значение с некоторой точностью совпадает
+# со значением, полученным теоретически. При увеличении количества
+# экспериментов 𝑁 точность только увеличивается.
