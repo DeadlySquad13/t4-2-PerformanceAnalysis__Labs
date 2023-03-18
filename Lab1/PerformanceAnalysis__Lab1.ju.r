@@ -3,14 +3,6 @@
 # Выполнил: Пакало Александр Сергеевич, студент РТ5-81
 
 # Вариант 5
-#
-# - Знакомство со средой статистических вычислений R
-# - Простые манипуляции с данными: числа, векторы
-# - Cоздание профиля в R-Studio-cloud
-# - Использование google colaboratory
-# - Управляющие конструкции
-# - Задания для тренировки
-# - Содержание лабораторной работы.
 
 # %% [markdown]
 # ### Загрузка датасета
@@ -30,7 +22,7 @@ p_price <- lm(price ~ speed + hd + ram + screen, computers)
 p_price
 
 # %% [markdown]
-# ### Вычисляем средние значения по датасету, задаём ограничения
+# ### Вычисление среднего значения по датасету
 
 # %%
 mean_ram <- mean(computers$ram)
@@ -38,53 +30,57 @@ mean_speed <- mean(computers$speed)
 mean_hd <- mean(computers$hd)
 mean_screen <- mean(computers$screen)
 
+# %% [markdown]
+# ### Ограничения
+
+# %%
 # C1
-restr_c1 <- hash()
-restr_c1[["price"]] <- 80000
-restr_c1[["min_n"]] <- 6
-restr_c1[["max_n"]] <- 10
-restr_c1[["hd"]] <- 500
-restr_c1[["ram"]] <- 24
-restr_c1[["screen"]] <- 15
-restr_c1[["multi"]] <- 0
-restr_c1[["speed"]] <- 70
+c1_restrictions <- hash()
+c1_restrictions[["price"]] <- 80000
+c1_restrictions[["min_n"]] <- 4
+c1_restrictions[["max_n"]] <- 10
+c1_restrictions[["hd"]] <- 500
+c1_restrictions[["ram"]] <- 24
+c1_restrictions[["screen"]] <- 15
+c1_restrictions[["multi"]] <- 0
+c1_restrictions[["speed"]] <- 70
 
 # C2
-restr_c2 <- hash()
-restr_c2[["price"]] <- 60000
-restr_c2[["min_n"]] <- 6
-restr_c2[["max_n"]] <- 32
-restr_c2[["hd"]] <- 250
-restr_c2[["ram"]] <- 12
-restr_c2[["screen"]] <- 15
-restr_c2[["multi"]] <- "yes"
-restr_c2[["speed"]] <- 30
+c2_restrictions <- hash()
+c2_restrictions[["price"]] <- 60000
+c2_restrictions[["min_n"]] <- 13
+c2_restrictions[["max_n"]] <- 32
+c2_restrictions[["hd"]] <- 250
+c2_restrictions[["ram"]] <- 12
+c2_restrictions[["screen"]] <- 15
+c2_restrictions[["multi"]] <- "yes"
+c2_restrictions[["speed"]] <- 30
 
 # C3
-restr_c3 <- hash()
-restr_c3[["price"]] <- 60000
-restr_c3[["min_n"]] <- 11
-restr_c3[["max_n"]] <- 15
-restr_c3[["hd"]] <- 300
-restr_c3[["ram"]] <- 16
-restr_c3[["screen"]] <- 15
-restr_c3[["multi"]] <- "yes"
-restr_c3[["speed"]] <- 40
+c3_restrictions <- hash()
+c3_restrictions[["price"]] <- 60000
+c3_restrictions[["min_n"]] <- 15
+c3_restrictions[["max_n"]] <- 15
+c3_restrictions[["hd"]] <- 300
+c3_restrictions[["ram"]] <- 16
+c3_restrictions[["screen"]] <- 15
+c3_restrictions[["multi"]] <- "yes"
+c3_restrictions[["speed"]] <- 40
 
 # C4
-restr_c4 <- hash()
-restr_c4[["price"]] <- 50000
-restr_c4[["min_n"]] <- 4
-restr_c4[["max_n"]] <- 8
-restr_c4[["hd"]] <- 400
-restr_c4[["ram"]] <- 16
-restr_c4[["screen"]] <- 15
-restr_c4[["multi"]] <- "yes"
-restr_c4[["speed"]] <- 30
+c4_restrictions <- hash()
+c4_restrictions[["price"]] <- 50000
+c4_restrictions[["min_n"]] <- 1
+c4_restrictions[["max_n"]] <- 8
+c4_restrictions[["hd"]] <- 400
+c4_restrictions[["ram"]] <- 16
+c4_restrictions[["screen"]] <- 15
+c4_restrictions[["multi"]] <- "yes"
+c4_restrictions[["speed"]] <- 30
 
 
 # %% [markdown]
-# ### Критерии оптимизации $w3$, $w4$
+# ### Критерии оптимизации
 
 # %%
 w1 <- c(0.4, 0.6)
@@ -98,26 +94,26 @@ h2_goal <- w1[1] * h2[1] * mean_speed + w1[2] * h2[1] * mean_ram +
     w4 * h2[4] * mean_hd
 
 mean_hd <- c(
-    max(mean_hd, restr_c1[["hd"]]), max(mean_hd, restr_c2[["hd"]]),
-    max(mean_hd, restr_c3[["hd"]]), max(mean_hd, restr_c4[["hd"]])
+    max(mean_hd, c1_restrictions[["hd"]]), max(mean_hd, c2_restrictions[["hd"]]),
+    max(mean_hd, c3_restrictions[["hd"]]), max(mean_hd, c4_restrictions[["hd"]])
 )
 
 
 mean_ram <- c(
-    max(mean_ram, restr_c1[["ram"]]), max(mean_ram, restr_c2[["ram"]]),
-    max(mean_ram, restr_c3[["ram"]]), max(mean_ram, restr_c4[["ram"]])
+    max(mean_ram, c1_restrictions[["ram"]]), max(mean_ram, c2_restrictions[["ram"]]),
+    max(mean_ram, c3_restrictions[["ram"]]), max(mean_ram, c4_restrictions[["ram"]])
 )
 
 
 mean_speed <- c(
-    max(mean_speed, restr_c1[["speed"]]), max(mean_speed, restr_c2[["speed"]]),
-    max(mean_speed, restr_c3[["speed"]]), max(mean_speed, restr_c4[["speed"]])
+    max(mean_speed, c1_restrictions[["speed"]]), max(mean_speed, c2_restrictions[["speed"]]),
+    max(mean_speed, c3_restrictions[["speed"]]), max(mean_speed, c4_restrictions[["speed"]])
 )
 
 
 mean_screen <- c(
-    max(mean_screen, restr_c1[["screen"]]), max(mean_screen, restr_c2[["screen"]]),
-    max(mean_screen, restr_c3[["screen"]]), max(mean_screen, restr_c4[["screen"]])
+    max(mean_screen, c1_restrictions[["screen"]]), max(mean_screen, c2_restrictions[["screen"]]),
+    max(mean_screen, c3_restrictions[["screen"]]), max(mean_screen, c4_restrictions[["screen"]])
 )
 
 objective.in <- c(
@@ -185,27 +181,27 @@ const.dir <- c(
 )
 
 const.rhs <- c(
-    h2_goal, restr_c1[["price"]], restr_c2[["price"]], restr_c3[["price"]], restr_c4[["price"]],
-    restr_c1[["min_n"]] * p_price$coefficients[1], restr_c1[["max_n"]] * p_price$coefficients[1],
-    restr_c1[["min_n"]] * mean_speed[1], restr_c1[["max_n"]] * mean_speed[1],
-    restr_c1[["min_n"]] * mean_hd[1], restr_c1[["max_n"]] * mean_hd[1],
-    restr_c1[["min_n"]] * mean_ram[1], restr_c1[["max_n"]] * mean_ram[1],
-    restr_c1[["min_n"]] * mean_screen[1], restr_c1[["max_n"]] * mean_screen[1],
-    restr_c2[["min_n"]] * p_price$coefficients[1], restr_c2[["max_n"]] * p_price$coefficients[1],
-    restr_c2[["min_n"]] * mean_speed[2], restr_c2[["max_n"]] * mean_speed[2],
-    restr_c2[["min_n"]] * mean_hd[2], restr_c2[["max_n"]] * mean_hd[2],
-    restr_c2[["min_n"]] * mean_ram[2], restr_c2[["max_n"]] * mean_ram[2],
-    restr_c2[["min_n"]] * mean_screen[2], restr_c2[["max_n"]] * mean_screen[2],
-    restr_c3[["min_n"]] * p_price$coefficients[1], restr_c3[["max_n"]] * p_price$coefficients[1],
-    restr_c3[["min_n"]] * mean_speed[3], restr_c3[["max_n"]] * mean_speed[3],
-    restr_c3[["min_n"]] * mean_hd[3], restr_c3[["max_n"]] * mean_hd[3],
-    restr_c3[["min_n"]] * mean_ram[3], restr_c3[["max_n"]] * mean_ram[3],
-    restr_c3[["min_n"]] * mean_screen[3], restr_c3[["max_n"]] * mean_screen[3],
-    restr_c4[["min_n"]] * p_price$coefficients[1], restr_c4[["max_n"]] * p_price$coefficients[1],
-    restr_c4[["min_n"]] * mean_speed[4], restr_c4[["max_n"]] * mean_speed[4],
-    restr_c4[["min_n"]] * mean_hd[4], restr_c4[["max_n"]] * mean_hd[4],
-    restr_c4[["min_n"]] * mean_ram[4], restr_c4[["max_n"]] * mean_ram[4],
-    restr_c4[["min_n"]] * mean_screen[4], restr_c4[["max_n"]] * mean_screen[4]
+    h2_goal, c1_restrictions[["price"]], c2_restrictions[["price"]], c3_restrictions[["price"]], c4_restrictions[["price"]],
+    c1_restrictions[["min_n"]] * p_price$coefficients[1], c1_restrictions[["max_n"]] * p_price$coefficients[1],
+    c1_restrictions[["min_n"]] * mean_speed[1], c1_restrictions[["max_n"]] * mean_speed[1],
+    c1_restrictions[["min_n"]] * mean_hd[1], c1_restrictions[["max_n"]] * mean_hd[1],
+    c1_restrictions[["min_n"]] * mean_ram[1], c1_restrictions[["max_n"]] * mean_ram[1],
+    c1_restrictions[["min_n"]] * mean_screen[1], c1_restrictions[["max_n"]] * mean_screen[1],
+    c2_restrictions[["min_n"]] * p_price$coefficients[1], c2_restrictions[["max_n"]] * p_price$coefficients[1],
+    c2_restrictions[["min_n"]] * mean_speed[2], c2_restrictions[["max_n"]] * mean_speed[2],
+    c2_restrictions[["min_n"]] * mean_hd[2], c2_restrictions[["max_n"]] * mean_hd[2],
+    c2_restrictions[["min_n"]] * mean_ram[2], c2_restrictions[["max_n"]] * mean_ram[2],
+    c2_restrictions[["min_n"]] * mean_screen[2], c2_restrictions[["max_n"]] * mean_screen[2],
+    c3_restrictions[["min_n"]] * p_price$coefficients[1], c3_restrictions[["max_n"]] * p_price$coefficients[1],
+    c3_restrictions[["min_n"]] * mean_speed[3], c3_restrictions[["max_n"]] * mean_speed[3],
+    c3_restrictions[["min_n"]] * mean_hd[3], c3_restrictions[["max_n"]] * mean_hd[3],
+    c3_restrictions[["min_n"]] * mean_ram[3], c3_restrictions[["max_n"]] * mean_ram[3],
+    c3_restrictions[["min_n"]] * mean_screen[3], c3_restrictions[["max_n"]] * mean_screen[3],
+    c4_restrictions[["min_n"]] * p_price$coefficients[1], c4_restrictions[["max_n"]] * p_price$coefficients[1],
+    c4_restrictions[["min_n"]] * mean_speed[4], c4_restrictions[["max_n"]] * mean_speed[4],
+    c4_restrictions[["min_n"]] * mean_hd[4], c4_restrictions[["max_n"]] * mean_hd[4],
+    c4_restrictions[["min_n"]] * mean_ram[4], c4_restrictions[["max_n"]] * mean_ram[4],
+    c4_restrictions[["min_n"]] * mean_screen[4], c4_restrictions[["max_n"]] * mean_screen[4]
 )
 
 
@@ -220,6 +216,7 @@ res$constraints
 
 # %% [markdown]
 # ### Проверка
+# Составим функции для расчета H1 и H2.
 
 # %%
 hh_1 <- function(p) {
@@ -249,24 +246,30 @@ hh_2(res$solution)
 # ### Вспомогательные функции
 
 # %%
-apply_restr <- function(data, restr) {
+apply_restrictions <- function(data, restr) {
     new_data <- data.frame()
-    for (i in c(1:length(rownames(data))))
-    {
+    for (i in seq_along(rownames(data))) {
         if (restr[["multi"]] != 0) {
-            if ((data[i, 3] >= restr[["speed"]]) & (data[i, 4] >= restr[["hd"]]) &
-                (data[i, 6] >= restr[["screen"]]) & (data[i, 5] >= restr[["ram"]]) &
-                (data[i, 8] == restr[["multi"]])) {
+            if ((data[i, 3] >= restr[["speed"]]) &&
+                (data[i, 4] >= restr[["hd"]]) &&
+                (data[i, 6] >= restr[["screen"]]) &&
+                (data[i, 5] >= restr[["ram"]]) &&
+                (data[i, 8] == restr[["multi"]])
+            ) {
                 new_data <- rbind(new_data, data[i, ])
             }
         }
         if (restr[["multi"]] == 0) {
-            if ((data[i, 3] >= restr[["speed"]]) & (data[i, 4] >= restr[["hd"]]) &
-                (data[i, 6] >= restr[["screen"]]) & (data[i, 5] >= restr[["ram"]])) {
+            if ((data[i, 3] >= restr[["speed"]]) &&
+                (data[i, 4] >= restr[["hd"]]) &&
+                (data[i, 6] >= restr[["screen"]]) &&
+                (data[i, 5] >= restr[["ram"]])
+            ) {
                 new_data <- rbind(new_data, data[i, ])
             }
         }
     }
+
     return(new_data)
 }
 
@@ -303,12 +306,12 @@ d_pareto <- function(X, Y) {
     p <- TRUE
     l <- FALSE
     i <- 1
-    while (p & (i <= length(X))) {
+    while (p && (i <= length(X))) {
         if (X[i] < Y[i]) p <- FALSE
         if (X[i] > Y[i]) l <- TRUE
         i <- i + 1
     }
-    if (!p | !l) {
+    if (!p || !l) {
         return(FALSE)
     } else {
         return(TRUE)
@@ -317,10 +320,10 @@ d_pareto <- function(X, Y) {
 
 pareto_opt <- function(data) {
     result <- c()
-    for (i in c(1:length(rownames(data)))) {
+    for (i in seq_along(rownames(data))) {
         p <- TRUE
 
-        for (j in c(1:length(rownames(data)))) {
+        for (j in seq_along(rownames(data))) {
             if (d_pareto(data[j, ], data[i, ])) {
                 p <- FALSE
             }
@@ -341,12 +344,11 @@ new_computers <- list()
 pareto <- list()
 ideal <- list()
 
-restrs <- c(restr_c1, restr_c2, restr_c3, restr_c4)
+restrs <- c(c1_restrictions, c2_restrictions, c3_restrictions, c4_restrictions)
 solutions <- c(2, 7, 12, 17)
 
-for (i in c(1:4))
-{
-    restr_computers <- apply_restr(computers, restrs[[i]])
+for (i in 1:4) {
+    restr_computers <- apply_restrictions(computers, restrs[[i]])
     new_computers[[i]] <- restr_computers
 
     norm_computers <- normalize(restr_computers)
@@ -357,8 +359,7 @@ for (i in c(1:4))
     ideal[[i]] <- c(res$solution[s_i] / n, res$solution[s_i + 1] / n, res$solution[s_i + 2] / n, res$solution[s_i + 3] / n)
 }
 
-for (i in c(1:4))
-{
+for (i in 1:4) {
     k <- pareto[[i]][1]
     k_min <- distance(ideal[[i]], new_computers[[i]][k, c(3:6)])
     print(paste("Для C", i, ":", sep = ""))
