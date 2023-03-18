@@ -243,36 +243,36 @@ hh_1(res$solution)
 hh_2(res$solution)
 
 # %% [markdown]
-# ### Вспомогательные функции
+# ### Фильтрация записей в соответствии с задаными ограничениями
 
 # %%
-apply_restrictions <- function(data, restr) {
+apply_restrictions <- function(data, restrictions) {
     new_data <- data.frame()
+
     for (i in seq_along(rownames(data))) {
-        if (restr[["multi"]] != 0) {
-            if ((data[i, 3] >= restr[["speed"]]) &&
-                (data[i, 4] >= restr[["hd"]]) &&
-                (data[i, 6] >= restr[["screen"]]) &&
-                (data[i, 5] >= restr[["ram"]]) &&
-                (data[i, 8] == restr[["multi"]])
-            ) {
-                new_data <- rbind(new_data, data[i, ])
-            }
-        }
-        if (restr[["multi"]] == 0) {
-            if ((data[i, 3] >= restr[["speed"]]) &&
-                (data[i, 4] >= restr[["hd"]]) &&
-                (data[i, 6] >= restr[["screen"]]) &&
-                (data[i, 5] >= restr[["ram"]])
-            ) {
-                new_data <- rbind(new_data, data[i, ])
-            }
+        speed_restrictions_met <- data[i, 3] >= restrictions[["speed"]]
+        hd_restrictions_met <- data[i, 4] >= restrictions[["hd"]]
+        screen_restrictions_met <- data[i, 6] >= restrictions[["screen"]]
+        ram_restrictions_met <- data[i, 5] >= restrictions[["ram"]]
+        multi_restrictions_met <- restrictions[["multi"]] != 0 && data[i, 8] == restrictions[["multi"]] || restrictions[["multi"]] == 0
+
+        if (speed_restrictions_met &&
+            hd_restrictions_met &&
+            screen_restrictions_met &&
+            ram_restrictions_met &&
+            multi_restrictions_met
+        ) {
+            new_data <- rbind(new_data, data[i, ])
         }
     }
 
     return(new_data)
 }
 
+# %% [markdown]
+# ### Нормализация значений
+
+# %%
 normalize <- function(data) {
     new_data <- data
 
@@ -302,6 +302,10 @@ normalize <- function(data) {
     return(result)
 }
 
+# %% [markdown]
+# ### Нахождение парето множества
+
+# %%
 d_pareto <- function(X, Y) {
     p <- TRUE
     l <- FALSE
@@ -318,6 +322,10 @@ d_pareto <- function(X, Y) {
     }
 }
 
+# %% [markdown]
+# ### Нахождение парето оптимальных решений
+
+# %%
 pareto_opt <- function(data) {
     result <- c()
     for (i in seq_along(rownames(data))) {
@@ -340,6 +348,7 @@ distance <- function(A, B) {
     return(sqrt(sum((A - B)^2)))
 }
 
+# %%
 new_computers <- list()
 pareto <- list()
 ideal <- list()
