@@ -393,25 +393,32 @@ if (!require("combinat")) {
 }
 library(combinat)
 
-# %% [markdown]
-# ### Задача 1
 
 # %%
-get_decision_from_prob <- function(prob) {
+get_decision_from_probability <- function(prob) {
     res <- sample(c(1, 0), size = 1, replace = TRUE, prob = c(prob, 1 - prob))
     return(res)
 }
 
+# %% [markdown]
+# ### Задача 1
+# В комиссии из 5 человек 4 члена принимают независимо друг от друга правильное
+# решение с вероятностью 0.9, а пятый для принятия решения бросает монету.
+# Окончательное решенние принимается большинством голосов. Кто с большей
+# вероятностью принимает правильное решение: комиссия или один человек из
+# комиссии?
+
+# %%
 N <- 10000
 persons_count <- 5
 overall_true_count <- 0
-probs <- c(0.9, 0.9, 0.9, 0.9, 0.5)
+probabilities <- c(0.9, 0.9, 0.9, 0.9, 0.5)
 
 for (i in 1:N) {
     true_count <- 0
 
-    for (prob in probs) {
-        result <- get_decision_from_prob(prob)
+    for (probability in probabilities) {
+        result <- get_decision_from_probability(probability)
         if (result == 1) {
             true_count <- true_count + 1
         }
@@ -422,42 +429,49 @@ for (i in 1:N) {
     }
 }
 
-print(overall_true_count / N)
+sprintf("Комиссия: %s", overall_true_count / N)
 
-one_person_prob <- sum(rep(0.9, 4), 0.5) / 5
-one_person_prob
+one_person_probability <- sum(rep(0.9, 4), 0.5) / 5
+sprintf("Один человек: %s", one_person_probability)
 
 # %% [markdown]
 # ### Задача 2
+# Три стрелка производят по одному выстрелу. Вероятность попадания в цель
+# каждого стрелка равна 0.9; 0.8; 0.85 соответственно. Найти вероятность того,
+# что в цель попадут только два стрелка?
 
 # %%
 overall <- 0
-probs <- c(0.9, 0.8, 0.85)
+probabilities <- c(0.9, 0.8, 0.85)
 
 for (i in 1:N) {
     in_target <- 0
-    for (prob in probs) {
-        result <- get_decision_from_prob(prob)
+    for (probability in probabilities) {
+        result <- get_decision_from_probability(probability)
+
         if (result == 1) {
             in_target <- in_target + 1
         }
     }
+
     if (in_target == 2) {
         overall <- overall + 1
     }
 }
 
-print(overall / N)
+overall / N
 
 # %% [markdown]
 # ### Задача 3
+# Василий попадает по мячу один раз из трех. Какова вероятность, что он попадет
+# три раза из десяти?
 
 # %%
 overall <- 0
 for (i in 1:N) {
     in_target <- 0
-    for (prob in 1:10) {
-        result <- get_decision_from_prob(1 / 3)
+    for (probability in 1:10) {
+        result <- get_decision_from_probability(1 / 3)
         if (result == 1) {
             in_target <- in_target + 1
         }
@@ -467,17 +481,19 @@ for (i in 1:N) {
     }
 }
 
-print(overall / N)
+overall / N
 
 # %% [markdown]
 # ### Задача 4
+# Вероятность рождения девочки 0.51, а мальчика 0.49. Если в семье Василия
+# пятеро детей,то какова вероятность, что в ней три девочки?
 
 # %%
 overall <- 0
 for (i in 1:N) {
     in_target <- 0
-    for (prob in 1:5) {
-        result <- get_decision_from_prob(0.51)
+    for (probability in 1:5) {
+        result <- get_decision_from_probability(0.51)
         if (result == 1) {
             in_target <- in_target + 1
         }
@@ -487,10 +503,14 @@ for (i in 1:N) {
     }
 }
 
-print(overall / N)
+overall / N
 
 # %% [markdown]
 # ### Задача 5
+# В двух коробках лежат зеленые и красные мячи: в первой - 4 зеленых
+# и 5 красных, во второй 7 зеленых и 3 красных. Из второй коробки наугад взяли
+# мяч и переложили его в первую коробку. Найти вероятность того, что наугад
+# взятый после этого из первой коробки шар будет зеленым.
 
 # %%
 overall <- 0
@@ -498,18 +518,18 @@ for (i in 1:N) {
     g <- 4
     r <- 5
 
-    from_second <- get_decision_from_prob(0.7)
+    from_second <- get_decision_from_probability(0.7)
     if (from_second == 1) {
         g <- g + 1
     } else {
         r <- r + 1
     }
 
-    from_first <- get_decision_from_prob(g / (r + g))
+    from_first <- get_decision_from_probability(g / (r + g))
 
     if (from_first == 1) {
         overall <- overall + 1
     }
 }
 
-print(overall / N)
+overall / N
