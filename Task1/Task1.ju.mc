@@ -174,35 +174,73 @@ a) Первая СМО выгоднее, так как $\frac{8}{9} < \frac{4}{3
 ![](./Task3States1.png)
 
 # %% [markdown]
-Составим уравнения Колмогорова:
+Как можно заметить, будут работать те же формулы, то и в задании №2, только $y = \frac{\lambda}{\mu p}$
+
+# %% [markdown]
 $$
-\frac{dP_0(t)}{dt}= \mu \cdot p \cdot P_1 - \lambda\cdot P_0 \\
-\frac{dP_1(t)}{dt}= \mu \cdot p \cdot P_1 - \lambda\cdot P_0 \\
+L_{\text{оч}}=\frac{y^{n+1}}{n!\cdot n}\cdot P_0\cdot \frac{1}{(1-y/n)^2} \\
+$$
+где
+$$
+y = \frac{\lambda}{\mu p} \\
+P_0=\left(\sum_{i=0}^n\frac{y^i}{i!}+\frac{y^{n+1}}{n!(n-y)}\right)^{-1}
 $$
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# %% [markdown]
+#### Средняя длина очереди
 
 # %%
-eqn_1: 'diff(f(x),x,2) = sin(x) + 'diff(g(x),x);
-eqn_2: 'diff(f(x),x) + x^2 - f(x) = 2*'diff(g(x),x,2);
+n: 3;
+a: 0.7;
+m: 0.8;
+p: 0.5;
+y: a / m / p;
 
 # %%
-desolve([eqn_1, eqn_2], [f(x),g(x)]);
+P0: (
+    sum(y^i / i!, i, 0, n) +
+    y^(n+1) / (n! * (n - y))
+)^-1;
+
+# %% [markdown]
+Тогда $L_{\text{оч}}$:
+# %%
+L: y^(n+1) / (n!*n) * P0 * 1/(1 - y / n)^2;
+
+# %% [markdown]
+#### Среднее время пребывания в очереди
+$$W_{\text{оч}}=\frac{L_{\text{оч}}}{\lambda}$$
+
+# %%
+W: L / a;
+
+# %% [markdown]
+#### Среднее время пребывания в СМО
+$$
+L_{\text{сист}}=L_{\text{оч}}+y \\
+$$
+
+# %%
+Lsys: L + y;
+
+# %% [markdown]
+Тогда $T_{\text{сист}}=\frac{L_{\text{сист}}}{\lambda}$:
+
+# %%
+Lsys / a;
+
+# %% [markdown]
+#### Абсолютная пропускная способность
+$$\lambda'=\lambda\cdot \left(1-\frac{y^n}{n!}\cdot P_0\right)$$
+
+# %%
+a * (1 - y^n / n! * P0);
+
+# %% [markdown]
+#### Среднее время пребывания заявки в системе
+$$
+T_{\text{сист}}=W_{\text{оч}}+\frac{1}{\mu}
+$$
+
+# %%
+W + 1 / m;
