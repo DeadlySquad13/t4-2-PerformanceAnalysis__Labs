@@ -244,3 +244,102 @@ $$
 
 # %%
 W + 1 / m;
+
+# %% [markdown]
+# ## Задание № 4
+# ### Граф состояний
+# ![](./Task4States.png)
+
+# %% [markdown]
+# Выведем уравнения Колмогорова и выполним преобразования Лапласа:
+$$sP_{0}(s) - 1 = \mu_{1}P_{1}(s) + \mu_{2}P_{4}(s) - \lambda_{1}P_{0}(s) - \lambda_{2}P_{0}(s)$$ 
+
+
+$$sP_{1}(s) = \mu_{1}P_{2}(s) + \mu_{2}P_{5}(s) + \lambda_{1}P_{0}(s) - \mu_{1}P_{1}(s) - \lambda_{1}P_{1}(s)  - \lambda_{2}P_{1}(s)$$
+
+
+$$sP_{2}(s) = \mu_{1}P_{3}(s) + \mu_{2}P_{6}(s) + \lambda_{1}P_{1}(s) - \mu_{1}P_{2}(s) - \lambda_{1}P_{2}(s)  - \lambda_{2}P_{2}(s)$$
+
+
+$$sP_{3}(s) = \lambda_{1}P_{2}(s) + \lambda_{1}P_{6}(s) - \mu_{1}P_{3}(s)$$
+
+
+$$sP_{4}(s) = \mu_{1}P_{5}(s) + \mu_{2}P_{7}(s) + \lambda_{2}P_{0}(s) - \mu_{2}P_{4}(s) - \lambda_{1}P_{4}(s)  - \lambda_{2}P_{4}(s)$$
+
+
+$$sP_{5}(s) = \mu_{1}P_{6}(s) + \mu_{2}P_{8}(s) + \lambda_{1}P_{4}(s) + \lambda_{2}P_{1}(s) - \mu_{2}P_{5}(s) - \lambda_{1}P_{5}(s)  - \lambda_{2}P_{5}(s) - \mu_{1}P_{5}(s)$$
+
+
+$$sP_{6}(s) = \lambda_{1}P_{5}(s) + \lambda_{2}P_{2}(s) + \lambda_{1}P_{8}(s) - \mu_{2}P_{6}(s) - \mu_{1}P_{6}(s) - \lambda_{1}P_{6}(s) $$
+
+
+$$sP_{7}(s) = \mu_{1}P_{8}(s) + \mu_{2}P_{9}(s) + \lambda_{2}P_{4}(s) - \mu_{2}P_{7}(s) - \lambda_{1}P_{7}(s)  - \lambda_{2}P_{7}(s)$$
+
+
+$$sP_{8}(s) = \lambda_{1}P_{7}(s) + \lambda_{2}P_{5}(s) + \lambda_{1}P_{9}(s) - \mu_{2}P_{8}(s) - \mu_{1}P_{8}(s) - \lambda_{1}P_{8}(s) $$
+
+
+$$sP_{9}(s) = \lambda_{2}P_{7}(s) - \mu_{2}P_{9}(s) - \lambda_{1}P_{9}(s)$$
+
+# %%
+mu1: 1.3;
+mu2: 2.2;
+lambda1: 1.1;
+lambda2: 1.4;
+s: 0;
+
+solution: float(solve(
+    [
+        P0+P1+P2+P3+P4+P5+P6+P7+P8+P9=1, 
+        s*P1=mu1*P2 + mu2*P5 + lambda1*P0 - mu1*P1 - lambda1*P1 - lambda2*P1, 
+        s*P2=mu1*P3 + mu2*P6 + lambda1*P1 - mu1*P2 - lambda1*P2 - lambda2*P2, 
+        s*P3=lambda1*P2 + lambda1*P6 - mu1*P3, 
+        s*P4=mu1*P5 + mu2*P7 + lambda2*P0 - mu2*P4 - lambda1*P4 - lambda2*P4, 
+        s*P5=mu1*P6 + mu2*P8 + lambda1*P4 + lambda2*P1 - mu2*P5 - lambda1*P5 - lambda2*P5 - mu1*P5, 
+        s*P6=lambda1*P5 + lambda2*P2 + lambda1*P8 - mu2*P6 - mu1*P6 - lambda1*P6, 
+        s*P7=mu1*P8 + mu2*P9 + lambda2*P4 - mu2*P7 - lambda1*P7 - lambda2*P7, 
+        s*P8=lambda1*P7 + lambda2*P5 + lambda1*P9 - mu2*P8 - mu1*P8 - lambda1*P8, 
+        s*P9=lambda2*P7 - mu2*P9 - lambda1*P9
+    ],
+    [P0, P1, P2, P3, P4, P5, P6, P7, P8, P9]
+))[1];
+
+# %% [markdown]
+Вероятность отказа в момент поступления заявки 1:
+
+# %%
+solution[4];
+
+# %% [markdown]
+Вероятность отказа в момент поступления заявки 2:
+
+# %%
+solution[4] + solution[7] + solution[9] + solution[10];
+
+# %% [markdown]
+Среднеее число каналов, обслуживающих задачу 1:
+
+# %%
+solution[2] + solution[6] + solution[7] + 2 * (solution[8] + solution[9]) + 3 * solution[4];
+
+# %% [markdown]
+Среднеее число каналов, обслуживающих задачу 2:
+
+# %%
+solution[5] + solution[6] + solution[7] + 2 * (solution[8] + solution[9]) + 3 * solution[10];
+
+# %% [markdown]
+Вероятность отказа:
+
+# %%
+lambda1 / (lambda1 + lambda2) * solution[4] + 
+lambda2 / (lambda1 + lambda2) * (solution[4] + solution[7] + solution[9] + solution[10]);
+
+# %% [markdown]
+Среднее число каналов, обслуживающих задачи:
+
+# %%
+solution[5] + solution[2] + 2 * (solution[3] + solution[6] + solution[8]) + 3 * (solution[4] + solution[7] + solution[9] + solution[10]);
+
+# %% [markdown]
+Среднее число заявок 1 и 2 и для системы в целом равно среднему числу каналов 1 и 2 и системы в целом, так как очередь отсутсвует.
