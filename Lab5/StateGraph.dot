@@ -1,0 +1,37 @@
+digraph G {
+    S0, S1 [color=teal]
+    S0 -> S1 [label=a]
+    S1 -> S0 [label=mu]
+    S0 -> "Sm+1" [label=nu]
+    "Sm+1" -> S0 [label=g]
+    "Sm+1" -> "Sm+2" [label=a]
+
+    S2 [color=teal]
+    S1 -> S2 [label=a]
+    S2 -> S1 [label=mu]
+    S1 -> "Sm+2" [label=nu]
+    "Sm+2" -> S1 [label=g]
+    "Sm+2" -> "Sm+3" [label=a]
+
+    S3 [color=teal]
+    S2 -> S3 [label=a]
+    S3 -> S2 [label=mu]
+    S2 -> "Sm+3" [label=nu]
+    "Sm+3" -> S2 [label=g]
+    "Sm+3" -> "Sm+4" [label=a]
+
+    "..." [color=teal]
+    S3 -> "..." [label=a shape=plaintext]
+    "..." -> S3 [label=mu shape=plaintext]
+    S3 -> "Sm+4" [label=nu]
+    "Sm+4" -> S3 [label=g]
+
+    Sm [color=teal]
+    "..." -> Sm [label=a]
+    Sm -> "..." [label=mu]
+
+    "Sm+4" -> "...." [label=a]
+
+    Sm -> "S2m+1" [label=nu]
+    "...." -> "S2m+1" [label=a]
+}
