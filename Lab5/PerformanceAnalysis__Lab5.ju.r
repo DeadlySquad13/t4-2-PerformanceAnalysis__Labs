@@ -114,9 +114,19 @@ ode_system_equations <- function(Time, State, Pars) {
 
         # Specifying list of derivatives.
         return(
-            list(
-                c(dP_0, dP_1, dP_2, dP_3, dP_4, dP_5, dP_6, dP_7, dP_8, dP_9, dP_10)
-            )
+            list(c(
+                dP_0,
+                dP_1,
+                dP_2,
+                dP_3,
+                dP_4,
+                dP_5,
+                dP_6,
+                dP_7,
+                dP_8,
+                dP_9,
+                dP_10
+            ))
         )
     })
 }
@@ -224,7 +234,7 @@ mean_length <- sum(unlist(
 ))
 mean_length
 
-
+# %% [markdown]
 # ### Среднее время нахождения в очереди
 # $$
 # W_{\text{оч}}=\frac{L_{\text{оч}}}{\lambda'}
