@@ -159,14 +159,18 @@ output
 # %%
 PRECISION_OF_ACCURACY <- 3
 t_index <- round(t, PRECISION_OF_ACCURACY) * 10^PRECISION_OF_ACCURACY + 1
-print(t_index)
+t_index
+
+# %% [markdown]
+# По данному индексу имеем следующей вектор значений:
+
+# %%
 results <- output[t_index, 1:12]
 results
 
 # %%
-# index - index of P.
-get_P <- function(index) {
-    return(as.numeric(results)[2 + index])
+get_P <- function(P_index) {
+    return(as.numeric(results)[2 + P_index])
 }
 
 
@@ -246,11 +250,12 @@ mean_length / absolute_flow_capacity
 # %% [markdown]
 # ### Среднее число заявок в системе
 # Для вычисления средней длины очереди просуммируем произведения вероятностей
-# на соответствующие этим вероятностям значения заявок в системе(длины очередей + количество заявок на
-# обслуживании):
+# на соответствующие этим вероятностям значения заявок в системе
+# (длины очередей + количество заявок на обслуживании):
 # $$
-# L = (1 + 0) \cdot P_1(t) + (1 + 1) \cdot P_2(t) + (1 + 2) \cdot P_3(t) + (1 + 3) \cdot P_4(t) + \text{...} + (1 + m - 1) \cdot P_m
-# + 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) + \text{...} + (m - 1) \cdot P_{2m}(t)
+# L = (1 + 0) \cdot P_1(t) + (1 + 1) \cdot P_2(t) + (1 + 2) \cdot P_3(t) +
+# (1 + 3) \cdot P_4(t) + \text{...} + (1 + m - 1) \cdot P_m +
+# 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) + \text{...} + (m - 1) \cdot P_{2m}(t)
 # $$
 
 # %%
