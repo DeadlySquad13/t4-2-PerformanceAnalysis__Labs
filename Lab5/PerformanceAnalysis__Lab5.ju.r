@@ -143,7 +143,7 @@ ode_system_equations <- function(Time, State, Pars) {
 # Также, если его оставить и задать в начальных условиях равным 1, оно все
 # равно будет постепенно расти до $\infty$, дестабилизируя при этом $P_i$ (
 # они тоже будут выходить за адекватные пределы).
-# 
+#
 # Поэтому было принято решение оставить уравнение нормировки как
 # дифференциальное, воспользовавшись при этом дополнительным параметром
 # `events`, позволяющим задать частичные частные решения в любой момент
@@ -174,11 +174,12 @@ yini <- c(
 INITIAL_TIME <- 0
 FINISH_TIME <- 100000
 
-norm_equation_values <- data.frame(var = "norm",
-                             time = INITIAL_TIME:FINISH_TIME,
-                             value = 1,
-                             method = "replace"
-                            )
+norm_equation_values <- data.frame(
+    var = "norm",
+    time = INITIAL_TIME:FINISH_TIME,
+    value = 1,
+    method = "replace"
+)
 
 ACCURACY <- 0.1
 times <- seq(INITIAL_TIME, FINISH_TIME, by = ACCURACY)
@@ -202,7 +203,10 @@ results <- output[t_index, 1:12]
 results
 
 # %% [markdown]
-# При $t \rightarrow{} \infty$:
+# При $t \rightarrow{} \infty$ (взяли последний результат, брать значения $t$
+# выше нет смысла, так как видно, что значения $\forall P_i$ в конце таблицы
+# сходятся):
+
 # %%
 results <- output[nrow(output), 2:12]
 results
@@ -354,16 +358,19 @@ library(simmer.plot)
 MM1m.env <- simmer("SuperDuperSim")
 MM1m.env
 
+# %% [markdown]
+Зададим траекторию отказа в случае полной очереди:
+
 # %%
 m.queue <- trajectory("clients' path") %>%
     ## add an intake activity
     seize("server", amount = 1) %>%
-    timeout(function() rexp(1, mu)) %>%
-    release("server", amount = 1) %>%
-    set_capacity("server", 0)
+    timeout(function() rexp(1, 1 / mu)) %>%
+    release("server", amount = 1)
 
 # %% [markdown]
-# Добавим симуляцию отказов
+# Добавим симуляцию поломки системы, задав механизм смены поля $capacity$ ресурса
+# $server$ с 1 на 0 и обратно с интенсивностью $\gamma$ и $\nu$ соответственно.
 
 # %%
 # Transform intervals timetable of chronologic points.
@@ -407,9 +414,9 @@ create_capacity_schedule <- function(number_of_points) {
     stopifnot(number_of_points %% 2 == 0)
 
     timetable <- create_timetable(
-                                  number_of_points,
-                                  break_intensity = gamma,
-                                  repair_intensity = nu
+        number_of_points,
+        break_intensity = gamma,
+        repair_intensity = nu
     )
 
     capacity_sequence <- rep(c(1, 0), times = number_of_points / 2)
@@ -417,10 +424,10 @@ create_capacity_schedule <- function(number_of_points) {
     period <- sum(timetable)
 
     return(
-       schedule(
-                timetable,
-                capacity_sequence,
-                period
+        schedule(
+            timetable,
+            capacity_sequence,
+            period
         )
     )
 }
@@ -428,31 +435,27 @@ create_capacity_schedule <- function(number_of_points) {
 capacity_schedule <- create_capacity_schedule(1000)
 
 # %%
+SIMULATION_TIME <- FINISH_TIME
+
 MM1m.env %>%
-    add_resource("server", capacity = capacity_schedule, queue_size = m) %>%
+    add_resource(
+        "server",
+        capacity = capacity_schedule,
+        queue_size = m
+    ) %>%
     add_generator("clients", m.queue, function() rexp(1, lambda)) %>%
-    run(until = FINISH_TIME)
+    run(until = SIMULATION_TIME)
 
 # %%
 arrivals <- get_mon_arrivals(MM1m.env)
 arrivals
 
-# %%
-get_mon_arrivals(MM1m.env) %>%
-    with(sum(!finished) / length(finished))
+# %% [markdown]
+# Логи симуляции:
 
 # %%
 resources <- get_mon_resources(MM1m.env)
 resources
-
-# %%
-plot(resources, metric = "usage", names = "server", items = "system") +
-    geom_hline(yintercept = mean_number_of_requests)
-
-# %%
-plot(arrivals, metric = "waiting_time", names = "server", items = "system") +
-    geom_hline(yintercept = W)
-
 
 # %% [markdown]
 # #### Вероятность простоя
@@ -460,7 +463,7 @@ plot(arrivals, metric = "waiting_time", names = "server", items = "system") +
 # к общему количеству состояний.
 
 # %%
-free_states <- resources %>% subset(server == 0 & capacity > 0)
+free_states <- resources %>% subset(server == 0) %>% subset( capacity > 0)
 free_states
 
 # %%
@@ -468,15 +471,15 @@ nrow(free_states) / nrow(resources)
 
 # %% [markdown]
 # #### Вероятность образования очереди
-# Вероятность образования очереди $P_{\text{оч}}$ равна обратной вероятности $P_{\overline{\text{оч}}}$.
-# Та, в свою очередь, равна сумме вероятностей, соответствующих состояниям,
-# в которых очередь пуста.
-# $$
-# P_{\text{оч}} = 1 - P_{\overline{\text{оч}}} = 1 - (P_0 + P_1 + P_{m + 1})
-# $$
+# Вычислим вероятность образования очереди, подсчитав отношение количества записей,
+# в которых очередь не пуста, к общему количеству записей.
 
 # %%
-1 - get_P(0) + get_P(1) + get_P(m + 1)
+queue_unempty <- resources %>% subset(queue != 0)
+queue_unempty
+
+# %%
+nrow(queue_unempty) / nrow(resources)
 
 # %% [markdown]
 # #### Абсолютную пропускную способность
@@ -486,143 +489,62 @@ nrow(free_states) / nrow(resources)
 # $$
 
 # %%
-absolute_flow_capacity <- lambda * (1 - get_P(m) - get_P(2 * m))
+number_of_unfinished <- arrivals %>% with(sum(!finished))
+number_of_unfinished
+
+# %%
+finish_probability <- number_of_unfinished / nrow(arrivals)
+finish_probability
+
+# %%
+absolute_flow_capacity <- lambda * finish_probability
 absolute_flow_capacity
 
 # %% [markdown]
 # #### Среднюю длину очереди
-# Для вычисления средней длины очереди просуммируем произведения вероятностей
-# на соответствующие этим вероятностям длины очередей.
-# $$
-# L_{\text{оч}} = 1 \cdot P_2(t) + 2 \cdot P_3(t) + 3 \cdot P_4(t) +
-# \text{...} + (m-1) \cdot P_m + 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) +
-# \text{...} + (m - 1) \cdot P_{2m}(t)
-# $$
 
 # %%
-# Получаем длину очереди в системе для заданного индекса вероятности.
-P.get_queue_length <- function(P_index) {
-    if (P_index < 1) {
-        return(0)
-    }
-
-    if (P_index <= m) {
-        return(P_index - 1)
-    }
-
-    return(P_index - m - 1)
-}
-
-P.get_product <- function(P_index) {
-    return(get_P(P_index) * P.get_queue_length(P_index))
-}
-
-mean_length <- sum(unlist(
-    lapply(c(2:m), P.get_product)
-)) + sum(unlist(
-    lapply(c((m + 2):(2 * m)), P.get_product)
-))
+mean_length <- resources %>% with(mean(queue))
 mean_length
 
 # %% [markdown]
 # #### Среднее время нахождения в очереди
-# $$
-# W_{\text{оч}}=\frac{L_{\text{оч}}}{\lambda'}
-# $$
+# Построим график и сравним его со значением $W_\text{оч}$ (черная горизонтальная прямая), найденным теоретически:
 
 # %%
-mean_length / absolute_flow_capacity
+plot(arrivals, metric = "waiting_time", names = "server", items = "system") +
+    coord_cartesian(xlim = c(0, SIMULATION_TIME), ylim = c(0, 100)) +
+    geom_hline(yintercept = W)
+
 
 # %% [markdown]
 # #### Среднее число заявок в системе
-# Для вычисления средней длины очереди просуммируем произведения вероятностей
-# на соответствующие этим вероятностям значения заявок в системе
-# (длины очередей + количество заявок на обслуживании):
-# $$
-# L = (1 + 0) \cdot P_1(t) + (1 + 1) \cdot P_2(t) + (1 + 2) \cdot P_3(t) +
-# (1 + 3) \cdot P_4(t) + \text{...} + (1 + m - 1) \cdot P_m +
-# 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) + \text{...} + (m - 1) \cdot P_{2m}(t)
-# $$
+# Среднее число заявок в системе сравним с теоретическим, проанализируя график использования
+# ресурса `server`:
 
 # %%
-# Получаем количество заявок на обслуживании для заданного индекса вероятности.
-P.get_number_of_requests_proccessed <- function(P_index) {
-    if (P_index > 0 && P_index <= m) {
-        return(1)
-    }
-
-    return(0)
-}
-
-P.get_product1 <- function(P_index) {
-    P.number_of_requests <- P.get_queue_length(P_index) + P.get_number_of_requests_proccessed(P_index)
-
-    return(get_P(P_index) * P.number_of_requests)
-}
-
-mean_number_of_requests <- sum(unlist(
-    lapply(c(2:m), P.get_product1)
-)) + sum(unlist(
-    lapply(c((m + 2):(2 * m)), P.get_product1)
-))
-mean_number_of_requests
+plot(resources, metric = "usage", names = "server", items = "system") +
+    geom_hline(yintercept = mean_number_of_requests)
 
 # %% [markdown]
-# #### Среднее время нахождения заявок в системе
-# $$
-# T =\frac{L}{\lambda'}
-# $$
+# По этому графику сложно судить, поэтому дополнительно рассчитаем значение,
+# воспользовавшись таблицей использования ресурсов:
 
 # %%
-mean_number_of_requests / absolute_flow_capacity
-
-# %%
-MM1m.env %>%
-    reset() %>%
-    run(1000000)
-
-# %%
-activities <- MM1m.env %>% get_mon_arrivals()
-activities
-
-# %%
-resources <- MM1m.env %>% get_mon_resources()
-resources
+resources %>% with(mean(queue) + mean(server))
 
 # %% [markdown]
-# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал
-# она  же обратная вероятность того, что
-# программа **будет выполнена** сразу же, то есть:
+# #### Среднее время нахождения заявок в системе $T$
+# Поступим со средним временем нахождения заявок в системе $T$ по аналогии
+# с $W$ - сравним два графика:
 
 # %%
-EPS <- 0.0001 # Должно быть 0, но в модели присутствуют некоторые погрешности.
-queue <- resources$queue
-income_count <- length(activities$name)
-programs_starts <- length(
-    subset(activities, (activities$end_time - activities$start_time - activities$activity_time) > EPS)$name
-)
-
-programs_starts
-income_count
-
-# %%
-program_wont_be_executed_immediately <- programs_starts / income_count
-program_wont_be_executed_immediately
+plot(arrivals, metric = "flow_time", names = "server", items = "system") +
+    coord_cartesian(xlim = c(0, 80000), ylim = c(0, 100)) +
+    geom_hline(yintercept = T)
 
 # %% [markdown]
-# #### 2. Среднее время до получения пользователем результатов реализации.
-
-# %%
-finished_activity_time <- mean(activities$end_time - activities$start_time)
-finished_activity_time
-
-# %% [markdown]
-# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
-
-# %%
-mean_queue <- program_wont_be_executed_immediately^2 / (1 - program_wont_be_executed_immediately)
-mean_queue
-mean_queue <- program_wont_be_executed_immediately^2 / (1 - program_wont_be_executed_immediately)
-mean_queue
-mean_queue
-mean_queue
+# ### Выводы
+# Как видно, теоретически вычисленные значения с некоторой точностью совпадают
+# со значениями, полученным численным методом. При увеличении количества
+# экспериментов 𝑁 точность только увеличивается.
