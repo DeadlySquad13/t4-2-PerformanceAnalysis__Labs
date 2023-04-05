@@ -5,12 +5,19 @@ digraph G {
     S4000 -> S3010 [label="4a"]
     S3010 -> S2110 [label="3a"]
 
+    S3010 -> S4000 [label="pn"]
+    S2110 -> S3010 [label="pn"]
+
+
     S3010 -> S3001 [label="(1-p)n"]
     S0112 -> S0013 [label="(1-p)n"]
 
     // Row B 
     S3001 -> S2011 [label="3a"]
     S2011 -> S1111 [label="2a"]
+
+    S2011 -> S3001 [label="pn"]
+    S1111 -> S2011 [label="pn"]
 
     S1111 -> S1012 [label="(1-p)n"]
 
@@ -25,6 +32,9 @@ digraph G {
     S2002 -> S1012 [label="2a"]
     S1012 -> S0112 [label="a"]
 
+    S2002 -> S1012 [label="pn" dir=back]
+    S1012 -> S0112 [label="pn" dir=back]
+
     S1012 -> S1003 [label="(1-p)n"]
 
     S2002 -> S3001 [label="2mu"]
@@ -33,6 +43,8 @@ digraph G {
 
     // Row D
     S1003 -> S0013 [label="a"]
+
+    S1003 -> S0013 [label="pn" dir=back]
 
     S1003 -> S2002 [label="3mu"]
     S0013 -> S1012 [label="3mu"]

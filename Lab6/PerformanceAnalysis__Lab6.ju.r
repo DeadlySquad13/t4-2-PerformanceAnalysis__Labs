@@ -77,6 +77,11 @@ View(data.frame(K,M,N,lambda,mu,nu,p,m1,m2))
 # По графу составим уравнения Колмогорова:
 # $$
 # \begin{cases}
+# \frac{}{}
+# \end{cases}
+
+# %% [markdown]
+# \begin{cases}
 # \frac{dP_0(t)}{dt} = -(\lambda + \nu)P_0(t) + \mu\cdot P_1(t) + \gamma \cdot P_6(t) \\
 # \frac{dP_1(t)}{dt} = -(\lambda + \nu + \mu)P_1(t) + \lambda \cdot P_0(t) + \mu \cdot P_2(t) + \gamma \cdot P_7(t) \\
 # \frac{dP_2(t)}{dt} = -(\lambda + \nu + \mu)P_2(t) + \lambda \cdot P_1(t) + \mu \cdot P_3(t) + \gamma \cdot P_8(t) \\
