@@ -71,34 +71,29 @@ View(data.frame(K,M,N,lambda,mu,nu,p,m1,m2))
 # ![graph](./State_graph.png)
 
 # %% [markdown]
-# ### Теоретически
+# ### Теоретически по уравнениям Колмогорова
 
 # %% [markdown]
 # По графу составим уравнения Колмогорова:
 # $$
 # \begin{cases}
-# \frac{}{}
-# \end{cases}
-
-# %% [markdown]
-# \begin{cases}
-# \frac{dP_0(t)}{dt} = -(\lambda + \nu)P_0(t) + \mu\cdot P_1(t) + \gamma \cdot P_6(t) \\
-# \frac{dP_1(t)}{dt} = -(\lambda + \nu + \mu)P_1(t) + \lambda \cdot P_0(t) + \mu \cdot P_2(t) + \gamma \cdot P_7(t) \\
-# \frac{dP_2(t)}{dt} = -(\lambda + \nu + \mu)P_2(t) + \lambda \cdot P_1(t) + \mu \cdot P_3(t) + \gamma \cdot P_8(t) \\
-# \frac{dP_3(t)}{dt} = -(\lambda + \nu + \mu)P_3(t) + \lambda \cdot P_2(t) + \mu \cdot P_4(t) + \gamma \cdot P_9(t) \\
-# \frac{dP_4(t)}{dt} = -(\lambda + \nu + \mu)P_4(t) + \lambda \cdot P_3(t) + \mu \cdot P_5(t) + \gamma \cdot P_{10}(t) \\
-# \frac{dP_5(t)}{dt} = -(\nu + \mu)P_5(t) + \lambda \cdot P_4(t) \\
-# \frac{dP_6(t)}{dt}  = -(\gamma + \lambda)P_6(t) + \nu \cdot P_0(t) \\
-# \frac{dP_7(t)}{dt}  = -(\gamma + \lambda)P_7(t) + \lambda \cdot P_6(t) + \nu \cdot P_1(t) \\
-# \frac{dP_8(t)}{dt}  = -(\gamma + \lambda)P_8(t) + \lambda \cdot P_7(t) + \nu \cdot P_2(t) \\
-# \frac{dP_9(t)}{dt}  = -(\gamma + \lambda)P_9(t) + \lambda \cdot P_{8}(t) + \nu \cdot P_3(t) \\
-# \frac{dP_{10}(t)}{dt} = -\gamma \cdot P_{10}(t) + \lambda \cdot P_{9}(t) + \nu \cdot P_4(t) + \nu \cdot P_5(t)
+# \frac{dP_{4000}(t)}{dt} = -4 \lambda P_{4000}(t) + p \nu P_{3010}(t) + \mu P_{3001}(t) \\
+# \frac{dP_{3010}(t)}{dt} = -(3 \lambda + p\nu + (1-p)\nu) P_{3010}(t) + 4 \lambda P_{4000}(t) + p \nu P_{2110}(t) + \mu P_{2011}(t) \\
+# \frac{dP_{2110}(t)}{dt} = -(p\nu + (1-p)\nu) P_{2110}(t) + 3 \lambda P_{3010}(t) + \mu P_{1111} \\
+# \frac{dP_{3001}(t)}{dt} = -(3 \lambda + \mu) P_{3001}(t) + p \nu P_{2011} + 2 \mu P_{2002} + (1-p) \nu P_{3010}(t) \\
+# \frac{dP_{2011}(t)}{dt} = -(2 \lambda + p\nu + (1-p)\nu + \mu) P_{2011}(t) + 3 \lambda P_{3001}(t) + p \nu P_{1111}(t) + 2 \mu P_{1012}(t) + (1-p)\nu P_{2110}(t) \\
+# \frac{dP_{1111}(t)}{dt} = -(p\nu + (1-p)\nu + \mu) P_{1111}(t) + 2 \lambda P_{2011}(t) + 2 \mu P_{0112} \\
+# \frac{dP_{2002}(t)}{dt} = -(2 \lambda + 2 \mu) P_{2002}(t) + p \nu P_{1012} + 3 \mu P_{1003} + (1-p) \nu P_{2011}(t) \\
+# \frac{dP_{1012}(t)}{dt} = -(\lambda + p\nu + (1-p)\nu + 2 \mu) P_{1012}(t) + 2 \lambda P_{2002}(t) + p \nu P_{0112}(t) + 3 \mu P_{0013}(t) + (1-p)\nu P_{1111}(t) \\
+# \frac{dP_{0112}(t)}{dt} = -(p\nu + (1-p)\nu + 2 \mu) P_{0112}(t) + \lambda P_{1012}(t) \\
+# \frac{dP_{1003}(t)}{dt} = -(\lambda + 3 \mu) P_{1003}(t) + p\nu P_{0013}(t) + (1-p)\nu P_{1012}(t) \\
+# \frac{dP_{0013}(t)}{dt} = -(p\nu + 3 \mu) P_{0013}(t) + \lambda P_{1003}(t) + (1-p)\nu P_{0112}(t)
 # \end{cases}
 # $$
 
 # и уравнение нормировки:
 # $$
-# P_0(t) + P_1(t) + P_2(t) + P_3(t) + P_4(t) + P_5(t) + P_6(t) + P_7(t) + P_8(t) + P_9(t) + P_{10}(t) = 1
+# P_{4000}(t) + P_{3010}(t) + P_{2110}(t) + P_{3001}(t) + P_{2011}(t) + P_{1111}(t) + P_{2002}(t) + P_{1012}(t) + P_{0112}(t) + P_{1003}(t) + P_{0013}(t) = 1
 # $$
 
 # %% [markdown]
