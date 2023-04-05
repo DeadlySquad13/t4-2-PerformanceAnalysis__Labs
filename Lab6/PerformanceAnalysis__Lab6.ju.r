@@ -108,33 +108,33 @@ library(deSolve)
 
 ode_system_equations <- function(Time, State, Pars) {
     with(as.list(c(State, Pars)), {
-        dP_0 <- -(lambda + nu) * abs(P_0) + mu * abs(P_1) + gamma * abs(P_6)
-        dP_1 <- -(lambda + nu + mu) * abs(P_1) + lambda * abs(P_0) + mu * abs(P_2) + gamma * abs(P_7)
-        dP_2 <- -(lambda + nu + mu) * abs(P_2) + lambda * abs(P_1) + mu * abs(P_3) + gamma * abs(P_8)
-        dP_3 <- -(lambda + nu + mu) * abs(P_3) + lambda * abs(P_2) + mu * abs(P_4) + gamma * abs(P_9)
-        dP_4 <- -(lambda + nu + mu) * abs(P_4) + lambda * abs(P_3) + mu * abs(P_5) + gamma * abs(P_10)
-        dP_5 <- -(nu + mu) * abs(P_5) + lambda * abs(P_4)
-        dP_6 <- -(gamma + lambda) * abs(P_6) + nu * abs(P_0)
-        dP_7 <- -(gamma + lambda) * abs(P_7) + lambda * abs(P_6) + nu * abs(P_1)
-        dP_8 <- -(gamma + lambda) * abs(P_8) + lambda * abs(P_7) + nu * abs(P_2)
-        dP_9 <- -(gamma + lambda) * abs(P_9) + lambda * abs(P_8) + nu * abs(P_3)
-        dP_10 <- -gamma * abs(P_10) + lambda * abs(P_9) + nu * abs(P_4) + nu * abs(P_5)
-        norm <- P_0 + P_1 + P_2 + P_3 + P_4 + P_5 + P_6 + P_7 + P_8 + P_9 + P_10
+        dP_4000 <- -4 * lambda * abs(P_4000) + p * nu * abs(P_3010) + mu * abs(P_3001)
+        dP_3010 <- -(3 * lambda + p * nu + (1-p) * nu) * abs(P_3010) + 4 * lambda * abs(P_4000) + p * nu * abs(P_2110) + mu * abs(P_2011)
+        dP_2110 <- -(p * nu + (1-p) * nu) * abs(P_2110) + 3 * lambda * abs(P_3010) + mu * abs(P_1111)
+        dP_3001 <- -(3 * lambda + mu) * abs(P_3001) + p * nu * abs(P_2011) + 2 * mu * abs(P_2002) + (1-p) * nu * abs(P_3010)
+        dP_2011 <- -(2 * lambda + p* nu + (1-p) * nu + mu) * abs(P_2011) + 3 * lambda * abs(P_3001) + p * nu * abs(P_1111) + 2 * mu * abs(P_1012) + (1-p) * nu * abs(P_2110)
+        dP_1111 <- -(p * nu + (1-p) * nu + mu) * abs(P_1111) + 2 * lambda * abs(P_2011) + 2 * mu * abs(P_0112)
+        dP_2002 <- -(2 * lambda + 2 * mu) * abs(P_2002) + p * nu * abs(P_1012) + 3 * mu * abs(P_1003) + (1-p) * nu * abs(P_2011)
+        dP_1012 <- -(lambda + p * nu + (1-p) * nu + 2 * mu) * abs(P_1012) + 2 * lambda * abs(P_2002) + p * nu * abs(P_0112) + 3 * mu * abs(P_0013) + (1-p) * nu * abs(P_1111)
+        dP_0112 <- -(p * nu + (1-p) * nu + 2 * mu) * abs(P_0112) + lambda * abs(P_1012)
+        dP_1003 <- -(lambda + 3 * mu) * abs(P_1003) + p * nu * abs(P_0013) + (1-p) * nu * abs(P_1012)
+        dP_0013 <- -(p * nu + 3 * mu) * abs(P_0013) + lambda * abs(P_1003) + (1-p) * nu * abs(P_0112)
+        norm <- abs(P_4000) + abs(P_3010) + abs(P_2110) + abs(P_3001) + abs(P_2011) + abs(P_1111) + abs(P_2002) + abs(P_1012) + abs(P_0112) + abs(P_1003) + abs(P_0013)
 
         # Specifying list of derivatives.
         return(
             list(c(
-                dP_0,
-                dP_1,
-                dP_2,
-                dP_3,
-                dP_4,
-                dP_5,
-                dP_6,
-                dP_7,
-                dP_8,
-                dP_9,
-                dP_10,
+                dP_4000,
+                dP_3010,
+                dP_2110,
+                dP_3001,
+                dP_2011,
+                dP_1111,
+                dP_2002,
+                dP_1012,
+                dP_0112,
+                dP_1003,
+                dP_0013,
                 norm
             ))
         )
@@ -162,17 +162,17 @@ ode_system_equations <- function(Time, State, Pars) {
 # %%
 pars <- NULL
 yini <- c(
-    P_0 = 1,
-    P_1 = 0,
-    P_2 = 0,
-    P_3 = 0,
-    P_4 = 0,
-    P_5 = 0,
-    P_6 = 0,
-    P_7 = 0,
-    P_8 = 0,
-    P_9 = 0,
-    P_10 = 0,
+    P_4000 = 1,
+    P_3010 = 0,
+    P_2110 = 0,
+    P_3001 = 0,
+    P_2011 = 0,
+    P_1111 = 0,
+    P_2002 = 0,
+    P_1012 = 0,
+    P_0112 = 0,
+    P_1003 = 0,
+    P_0013 = 0,
     norm = 1
 )
 
