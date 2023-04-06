@@ -26,18 +26,18 @@
 #   - среднее число заявок в системе.
 
 # %%
-Variant<-5
-set.seed(Variant) 
-K<-sample(c(3:6),1)
-M<-sample(c(1:3),1)
-N<-sample(c(1:3),1)
-lambda<-runif(1)
-mu<-runif(1)
-nu<-runif(1)
-p<-runif(1)
-m2<-sample(c(0:2),1)
-m1<-sample(c(0:2),1)
-View(data.frame(K,M,N,lambda,mu,nu,p,m1,m2))
+Variant <- 5
+set.seed(Variant)
+K <- sample(c(3:6),1)
+M <- sample(c(1:3),1)
+N <- sample(c(1:3),1)
+lambda <- runif(1)
+mu <- runif(1)
+nu <- runif(1)
+p <- runif(1)
+m2 <- sample(c(0:2),1)
+m1 <- sample(c(0:2),1)
+View(data.frame(K, M, N, lambda, mu, nu, p, m1, m2))
 
 # %% [markdown]
 # Введем следующие состояния:
@@ -47,7 +47,6 @@ View(data.frame(K,M,N,lambda,mu,nu,p,m1,m2))
 # вирус;
 # - $S_{3001}$ - три программиста пишут программу, одна программа выполняется
 # на сервере;
-# - $S_{2110}$ - два программиста пишут программу, одна программа проверяется на
 # - $S_{2110}$ - два программиста пишут программу, одна программа проверяется на
 # вирус, одна стоит в очереди;
 # - $S_{2011}$ - два программиста пишут программу, одна программа проверяется на
@@ -179,109 +178,79 @@ results
 # %%
 sum(results)
 
+# %% [markdown]
+Создадим вспомогательную функцию для взаимодействия с результатами.
+
 # %%
-get_P <- function(P_index) {
-    return(as.numeric(results)[1 + P_index])
+if (!require("hash")) {
+    install.packages("hash")
+}
+library(hash)
+probabilities <- hash(results)
+
+# %%
+P <- function(P_index) {
+    hash_index <- paste("P_", P_index, sep = "")
+
+    try(
+        if (!has.key(hash_index, probabilities)) {
+            stop("No P value with index: ", P_index)
+        }
+    )
+
+    return(probabilities[[hash_index]])
 }
 
 # %% [markdown]
-# #### Среднее время пребывания заявки в системе
-
-# %% [markdown]
 # #### Среднее число заявок в системе
+# Для вычисления среднего числа заявок в системе просуммируем произведения вероятностей
+# на соответствующие этим вероятностям значения заявок в системе
+# (длина очереди + количество заявок на проверке антивируса + количество
+# заявок на обслуживании):
+# $$
+# L = 0 \cdot P_{4000}(t) + 1 \cdot P_{3010}(t) + (1 + 1) \cdot P_{2110}(t) +
+# 1 \cdot P_{3001}(t) + (1 + 1) \cdot P_{2011}(t) + (1 + 1 + 1) \cdot P_{1111}(t) +
+# 2 \cdot P_{2002}(t) + (1 + 2) \cdot P_{1012}(t) + (1 + 1 + 2) \cdot P_{0112}(t) +
+# 3 \cdot P_{1003}(t) + (1 + 3) \cdot P_{0013}(t)
+# $$
+
+Упростив, получаем:
+# $$
+# L = P_{3010}(t) + 2 \cdot P_{2110}(t) +
+# P_{3001}(t) + 2 \cdot P_{2011}(t) + 3 \cdot P_{1111}(t) +
+# 2 \cdot P_{2002}(t) + 3 \cdot P_{1012}(t) + 4 \cdot P_{0112}(t) +
+# 3 \cdot P_{1003}(t) + 4 \cdot P_{0013}(t)
+# $$
+
+# %%
+mean_number_of_requests <- P("3010") + 2 * P("2110") + P("3001") + 2 * P("2011") +
+    3 * P("1111") + 2 * P("2002") + 3 * P("1012") + 4 * P("0112") + 3 * P("1003") +
+    4 * P("0013")
+mean_number_of_requests
 
 # %% [markdown]
 # #### Абсолютная пропускная способность
 #  Абсолютную пропускную способность вычислим по формуле:
 # $$
-# \lambda'=\lambda\cdot(1-P_m(t)-P_{2m}(t))
+# \lambda' = (1 - p) \cdot \lambda \cdot \left[1 - (P_{2110}(t) + P_{1111}(t) + P_{S0112}(t))\right]
 # $$
 
+# Мы вычли вероятности состояний, в которых очередь переполнена, и перемножили
+# на пропускную способность с учетом отказа программ из-за вирусов
+# с вероятностью $(1 - p)$.
+
+# Обратим внимание, что этим вероятностям соответствуют правые конечные вершины
+# в каждом кластере графа, не считая фиолетового (в нем просто нет нужной
+# вершины, все сервера идеально заполнены).
+
 # %%
-absolute_flow_capacity <- lambda * (1 - get_P(m) - get_P(2 * m))
+absolute_flow_capacity <- (1 - p) * lambda * (1 - (
+   P("2110") + P("1111") + P("0112"))
+)
 absolute_flow_capacity
 
 # %% [markdown]
-# #### Среднюю длину очереди
-# Для вычисления средней длины очереди просуммируем произведения вероятностей
-# на соответствующие этим вероятностям длины очередей.
-# $$
-# L_{\text{оч}} = 1 \cdot P_2(t) + 2 \cdot P_3(t) + 3 \cdot P_4(t) +
-# \text{...} + (m-1) \cdot P_m + 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) +
-# \text{...} + (m - 1) \cdot P_{2m}(t)
-# $$
-
-# %%
-# Получаем длину очереди в системе для заданного индекса вероятности.
-P.get_queue_length <- function(P_index) {
-    if (P_index < 1) {
-        return(0)
-    }
-
-    if (P_index <= m) {
-        return(P_index - 1)
-    }
-
-    return(P_index - m - 1)
-}
-
-P.get_product <- function(P_index) {
-    return(get_P(P_index) * P.get_queue_length(P_index))
-}
-
-mean_length <- sum(unlist(
-    lapply(c(2:m), P.get_product)
-)) + sum(unlist(
-    lapply(c((m + 2):(2 * m)), P.get_product)
-))
-mean_length
-
-# %% [markdown]
-# #### Среднее время нахождения в очереди
-# $$
-# W_{\text{оч}}=\frac{L_{\text{оч}}}{\lambda'}
-# $$
-
-# %%
-W <- mean_length / absolute_flow_capacity
-W
-
-# %% [markdown]
-# #### Среднее число заявок в системе
-# Для вычисления средней длины очереди просуммируем произведения вероятностей
-# на соответствующие этим вероятностям значения заявок в системе
-# (длины очередей + количество заявок на обслуживании):
-# $$
-# L = (1 + 0) \cdot P_1(t) + (1 + 1) \cdot P_2(t) + (1 + 2) \cdot P_3(t) +
-# (1 + 3) \cdot P_4(t) + \text{...} + (1 + m - 1) \cdot P_m +
-# 1 \cdot P_{m+2}(t) + 2 \cdot P_{m+3}(t) + \text{...} + (m - 1) \cdot P_{2m}(t)
-# $$
-
-# %%
-# Получаем количество заявок на обслуживании для заданного индекса вероятности.
-P.get_number_of_requests_proccessed <- function(P_index) {
-    if (P_index > 0 && P_index <= m) {
-        return(1)
-    }
-
-    return(0)
-}
-
-P.get_product1 <- function(P_index) {
-    P.number_of_requests <- P.get_queue_length(P_index) + P.get_number_of_requests_proccessed(P_index)
-
-    return(get_P(P_index) * P.number_of_requests)
-}
-
-mean_number_of_requests <- sum(unlist(
-    lapply(c(2:m), P.get_product1)
-)) + sum(unlist(
-    lapply(c((m + 2):(2 * m)), P.get_product1)
-))
-mean_number_of_requests
-
-# %% [markdown]
-# #### Среднее время нахождения заявок в системе
+# #### Среднее время пребывания заявки в системе
 # $$
 # T =\frac{L}{\lambda'}
 # $$
@@ -292,7 +261,7 @@ T
 
 # %% [markdown]
 # ### Численно
-# Построим с помощью пакета simmer симуляцию системы $M/M/1/m$.
+# Построим с помощью пакета simmer симуляцию системы.
 
 
 # %%
@@ -305,139 +274,64 @@ if (!require("simmer.plot")) {
 }
 library(simmer.plot)
 
-MM1m.env <- simmer("SuperDuperSim")
-MM1m.env
+env <- simmer("SuperDuperSim")
+env
 
 # %% [markdown]
 Зададим траекторию отказа в случае полной очереди:
 
 # %%
-m.queue <- trajectory("clients' path") %>%
-    ## add an intake activity
+queue <- trajectory("program's path") %>%
+    # set_attribute("number_of_free_programmers", function() get_global(env, "number_of_free_programmers") - 1) %>%
+    set_source("program", function() rexp(1, 1 / lambda )) %>%
+    seize("antivirus_server", amount = 1) %>%
+    timeout(function() rexp(1, 1 / nu)) %>%
+    log_(function() {
+        seized <- get_seized(env, resources = c('antivirus_server', 'server'))
+
+        return(paste0(seized[1], seized[2]))
+    }) %>%
+    release("antivirus_server", amount = 1) %>%
+    leave(
+          function() runif(1) < p,
+          out = trajectory() %>% log_("Antivirus found")
+    ) %>%
+    log_("No antivirus found") %>%
     seize("server", amount = 1) %>%
     timeout(function() rexp(1, 1 / mu)) %>%
     release("server", amount = 1)
 
-# %% [markdown]
-# Добавим симуляцию поломки системы, задав механизм смены поля $capacity$ ресурса
-# $server$ с 1 на 0 и обратно с интенсивностью $\gamma$ и $\nu$ соответственно.
-
-# %%
-# Transform intervals timetable of chronologic points.
-# Example:
-# 1, 2, 0.5, 0.3, 0.2 -> 1, 3, 3.5, 3.8, 4
-accumulate <- function(intervals) {
-    timetable <- c()
-
-    for (interval_index in seq_along(intervals)) {
-        point <- intervals[interval_index]
-
-        if (interval_index > 1) {
-            point <- point + timetable[interval_index - 1]
-        }
-
-        timetable <- append(timetable, point)
-    }
-
-    return(timetable)
-}
-
-# %%
-create_timetable <- function(number_of_points, break_intensity, repair_intensity) {
-    intervals <- c()
-
-    for (interval_index in 1:number_of_points) {
-        intensity <- break_intensity
-
-        if (interval_index %% 2 == 0) {
-            intensity <- repair_intensity
-        }
-
-        intervals <- append(intervals, rexp(1, 1 / intensity))
-    }
-
-
-    return(accumulate(intervals))
-}
-
-create_capacity_schedule <- function(number_of_points) {
-    stopifnot(number_of_points %% 2 == 0)
-
-    timetable <- create_timetable(
-        number_of_points,
-        break_intensity = gamma,
-        repair_intensity = nu
-    )
-
-    capacity_sequence <- rep(c(1, 0), times = number_of_points / 2)
-
-    period <- sum(timetable)
-
-    return(
-        schedule(
-            timetable,
-            capacity_sequence,
-            period
-        )
-    )
-}
-
-capacity_schedule <- create_capacity_schedule(1000)
-
 # %%
 SIMULATION_TIME <- FINISH_TIME
 
-MM1m.env %>%
+env %>%
+    add_resource(
+        "antivirus_server",
+        capacity = N,
+        queue_size = m1
+    ) %>%
     add_resource(
         "server",
-        capacity = capacity_schedule,
-        queue_size = m
+        capacity = M,
+        queue_size = m2
     ) %>%
-    add_generator("clients", m.queue, function() rexp(1, lambda)) %>%
+    add_generator("program", queue, function() rexp(1, 1 / (K * lambda))) %>%
     run(until = SIMULATION_TIME)
 
 # %%
-arrivals <- get_mon_arrivals(MM1m.env)
+arrivals <- get_mon_arrivals(env)
 arrivals
 
 # %% [markdown]
 # Логи симуляции:
 
 # %%
-resources <- get_mon_resources(MM1m.env)
+resources <- get_mon_resources(env)
 resources
 
 # %% [markdown]
-# #### Вероятность простоя
-# Подсчитаем отношение количества состояний, когда система не загружена,
-# к общему количеству состояний.
-
-# %%
-free_states <- resources %>% subset(server == 0) %>% subset( capacity > 0)
-free_states
-
-# %%
-nrow(free_states) / nrow(resources)
-
-# %% [markdown]
-# #### Вероятность образования очереди
-# Вычислим вероятность образования очереди, подсчитав отношение количества записей,
-# в которых очередь не пуста, к общему количеству записей.
-
-# %%
-queue_unempty <- resources %>% subset(queue != 0)
-queue_unempty
-
-# %%
-nrow(queue_unempty) / nrow(resources)
-
-# %% [markdown]
 # #### Абсолютную пропускную способность
-#  Абсолютную пропускную способность вычислим по формуле:
-# $$
-# \lambda'=\lambda\cdot(1-P_m(t)-P_{2m}(t))
-# $$
-
+# Абсолютную пропускную способность найдем следующим образом:
 # %%
 number_of_unfinished <- arrivals %>% with(sum(!finished))
 number_of_unfinished
@@ -447,51 +341,29 @@ finish_probability <- number_of_unfinished / nrow(arrivals)
 finish_probability
 
 # %%
-absolute_flow_capacity <- lambda * finish_probability
+absolute_flow_capacity <- lambda * (1 - finish_probability)
 absolute_flow_capacity
 
 # %% [markdown]
-# #### Среднюю длину очереди
-
-# %%
-mean_length <- resources %>% with(mean(queue))
-mean_length
-
-# %% [markdown]
-# #### Среднее время нахождения в очереди
-# Построим график и сравним его со значением $W_\text{оч}$ (черная горизонтальная прямая), найденным теоретически:
-
-# %%
-plot(arrivals, metric = "waiting_time", names = "server", items = "system") +
-    coord_cartesian(xlim = c(0, SIMULATION_TIME), ylim = c(0, 100)) +
-    geom_hline(yintercept = W)
-
-
-# %% [markdown]
 # #### Среднее число заявок в системе
-# Среднее число заявок в системе сравним с теоретическим, проанализируя график использования
-# ресурса `server`:
+# Рассчитаем значение, воспользовавшись таблицей использования ресурсов:
 
 # %%
-plot(resources, metric = "usage", names = "server", items = "system") +
-    geom_hline(yintercept = mean_number_of_requests)
+mean_number_of_requests <- resources %>% with(mean(queue) + mean(server) + mean(system))
+mean_number_of_requests
 
 # %% [markdown]
-# По этому графику сложно судить, поэтому дополнительно рассчитаем значение,
-# воспользовавшись таблицей использования ресурсов:
+# #### Среднее время нахождения заявок в системе
+# Найдем на основании практически величин среднее время нахождения заявок
+# в системе
 
 # %%
-resources %>% with(mean(queue) + mean(server))
+T <- mean_number_of_requests / absolute_flow_capacity
+T
+
 
 # %% [markdown]
-# #### Среднее время нахождения заявок в системе $T$
-# Поступим со средним временем нахождения заявок в системе $T$ по аналогии
-# с $W$ - сравним два графика:
-
-# %%
-plot(arrivals, metric = "flow_time", names = "server", items = "system") +
-    coord_cartesian(xlim = c(0, 80000), ylim = c(0, 100)) +
-    geom_hline(yintercept = T)
+# ### Теоретически методом укрупненных состояний
 
 # %% [markdown]
 # ### Выводы
