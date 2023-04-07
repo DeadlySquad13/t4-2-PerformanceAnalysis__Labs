@@ -1,0 +1,11 @@
+digraph D {
+    rankdir="LR"
+
+    S0 -> S1 [label="n0"]
+    S1 -> "..." [label="n1"]
+    "..." -> "SL_сист" [label="nL_сист-1"]
+
+    S0 -> S1 [label="m1" dir=back]
+    S1 -> "..." [label="m2" dir=back]
+    "..." -> "SL_сист" [label="mL_сист" dir=back]
+}

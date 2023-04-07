@@ -28,15 +28,15 @@
 # %%
 Variant <- 5
 set.seed(Variant)
-K <- sample(c(3:6),1)
-M <- sample(c(1:3),1)
-N <- sample(c(1:3),1)
+K <- sample(c(3:6), 1)
+M <- sample(c(1:3), 1)
+N <- sample(c(1:3), 1)
 lambda <- runif(1)
 mu <- runif(1)
 nu <- runif(1)
 p <- runif(1)
-m2 <- sample(c(0:2),1)
-m1 <- sample(c(0:2),1)
+m2 <- sample(c(0:2), 1)
+m1 <- sample(c(0:2), 1)
 View(data.frame(K, M, N, lambda, mu, nu, p, m1, m2))
 
 # %% [markdown]
@@ -349,7 +349,9 @@ absolute_flow_capacity
 # Рассчитаем значение, воспользовавшись таблицей использования ресурсов:
 
 # %%
-mean_number_of_requests <- resources %>% with(mean(queue) + mean(server) + mean(system))
+mean_number_of_requests <- resources %>% with(
+    mean(queue) + mean(server) + mean(system)
+)
 mean_number_of_requests
 
 # %% [markdown]
@@ -364,6 +366,86 @@ T
 
 # %% [markdown]
 # ### Теоретически методом укрупненных состояний
+# Проанализируем сложную систему по частям, с помощью укрупненных (агрегированных) моделей.
+# В каждой модели подробно представим только некоторую часть системы, а влияние
+# остальных частей отразим некоторым обобщенным параметром (параметром связи).
+
+# Предложим декомпозицию нашей задачи в виде двух моделей.
+
+# В первой модели совокупность серверов и компьютеров по проверке наличия
+# вирусов заменим только одним обобщенный параметром - интенсивностью
+# обслуживания общ $\mu_{\text{общ}}$.
+
+# ![Programmers graph](./Programmers_graph.png)
+
+# Как видно, модель будет обычной моделью
+# рождения гибели для замкнутой системы
+
+# %% [markdown]
+# $$
+# P_0 = \left(1 + \frac{4\lambda}{\mu_{\text{общ}}} + \frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2} + \ldots + \frac{4!\lambda^4}{\mu_{\text{общ}}^4}\right)^{-1}
+# $$
+
+# %% [markdown]
+# $$
+# P_1 = P_0 \frac{4\lambda}{\mu_{\text{общ}}}
+# $$
+
+# %% [markdown]
+# $$
+# P_2 = P_0 \frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# $$
+
+# %% [markdown]
+# $$
+# P_3 = P_0\frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# $$
+
+# %% [markdown]
+# $$
+# P_4 = P_0\frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# $$
+
+# %% [markdown]
+# $$
+# L_{\text{сист}} = \sum_{k=1}^4 k \cdot P_k
+# $$
+
+# %% [markdown]
+# $$
+# T_{\text{сист}} = \frac{L_{\text{сист}}}{\lambda(4-L_{\text{сист}})}
+# $$
+
+# %% [markdown]
+# Во второй модели будем считать, что в системе постоянно циркулируют
+# $L_{\text{сист}}$ заявок. В качестве состояний системы возьмем количество
+# заявок, обрабатываемых на основных серверах:
+# $$
+# S_0, S_1, S_2, \ldots, S_{L_{\text{сист}}}
+# $$
+
+# %% [markdown]
+# ![Servers graph](./Servers_graph.png)
+
+# %% [markdown]
+# $$
+# \nu_n = (1-p)\nu \cdot \min{(N,L_{\text{сист}}-n)}, n=0, \ldots, L_{\text{сист}} - 1 \\
+# \mu_n = \mu \cdot \min{(M, n)}, n=1, 2, \ldots, L_{\text{сист}}
+# $$
+
+# %% [markdown]
+# Аналогичным образом посчитаем финальные вероятности:
+# $$
+# \pi_0 = \left(1+\frac{\nu_0}{\mu_1}+\frac{\nu_0\nu_1}{\mu_1\mu_2}+\ldots\right)^{-1} \\
+# \pi_1=\pi_0\cdot \frac{\nu_0}{\mu_1} \\
+# \pi_2=\pi_0\cdot \frac{\nu_0\nu_1}{\mu_1\mu_2} \\
+# $$
+
+# %% [markdown]
+# Тогда:
+# $$
+# \mu_{\text{общ}}=\sum_{n=1}^{L_{\text{сист}}}\pi_n\cdot \mu_n\tag{11}
+# $$
 
 # %% [markdown]
 # ### Выводы

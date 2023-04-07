@@ -1,0 +1,9 @@
+digraph D {
+    rankdir="LR"
+
+    S0 -> S1 [label="4a"]
+    S1 -> S2 [label="3a"]
+    S2 -> S3 [label="2a"]
+    S3 -> S4 [label="a"]
+    S0 -> S1 -> S2 -> S3 -> S4 [label="mu_общ" dir=back]
+}
