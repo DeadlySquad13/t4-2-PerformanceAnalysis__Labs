@@ -31,7 +31,16 @@ View(data.frame(m, q, lambda))
 print(Q)
 
 # %% [markdown]
-# ### Теоретически при алгоритме SPT
+# ### СМО вида $М/М/1/\infty$
+# Представим данную систему как одноканальную СМО с неограниченной очередью.
+
+# #### Теоретически
+# #### Численно
+
+# %% [markdown]
+# ### Алгоритм SPT
+
+# #### Теоретически
 # Среднее время обслуживания складывается из ожидания в очереди и времени
 # выполнения, усредненным по всем заявкам:
 # $$
@@ -66,18 +75,19 @@ sum_of_Q_progression_sums
 # %%
 T_spt <- 1 / m * sum_of_Q_progression_sums
 T_spt
+
+# %% [markdown]
+# #### Численно
+
+# %% [markdown]
+# ### Алгоритм Round Robin
+# Реализуем round robin.
+
 # %%
 N <- 10000
-# N <- 10
 programs <- sample(Q, N, replace = TRUE)
 programs
 
-# %%
-s <- c(1, 2, 3)
-tail(s, length(s) - 1)
-
-# %% [markdown]
-# Реализуем round robin.
 
 # %%
 time <- 0
@@ -115,3 +125,4 @@ programs <- trajectory("programs' path") %>%
 env %>%
     add_resource("server", 1) %>%
     add_generator("programmers", programs, function() rexp(1, k / t1))
+add_generator("programmers", programs, function() rexp(1, k / t1))
