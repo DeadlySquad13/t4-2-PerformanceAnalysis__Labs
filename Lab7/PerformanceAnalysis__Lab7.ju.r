@@ -31,11 +31,85 @@ View(data.frame(m, q, lambda))
 print(Q)
 
 # %% [markdown]
+# Заведем таблицу результатов
+
+# %%
+results <- data.frame(0, 0, 0, 0, 0)
+colnames(results) <- c("M/M/1/infty theoretical", "M/M/1/infty practical", "SPT theoretical", "SPT practical", "Round Robin")
+
+# %% [markdown]
 # ### СМО вида $М/М/1/\infty$
 # Представим данную систему как одноканальную СМО с неограниченной очередью.
 
+# %% [markdown]
 # #### Теоретически
+
+# %%
+t2 <- mean(Q)
+mu <- 1 / t2
+mu
+
+# %%
+y <- lambda / mu
+y
+
+# %% [markdown]
+# Так как $y > 1$, поменяем $\lambda$.
+
+# %%
+lambda <- 0.3
+
+# %%
+t2 <- mean(Q)
+mu <- 1 / t2
+mu
+
+# %%
+y <- lambda / mu
+y
+
+# %%
+results[1] <- 1 / mu / (1 - y)
+results
+
+# %% [markdown]
 # #### Численно
+
+# %%
+if (!require("simmer")) {
+    install.packages("simmer")
+}
+library(simmer)
+
+env <- simmer("SuperDuperSim")
+env
+
+# %%
+programs <- trajectory("programs' path") %>%
+    seize("server", amount = 1) %>%
+    timeout(function() rexp(1, mu)) %>%
+    release("server", amount = 1)
+
+# %%
+SIMULATION_TIME <- 10000
+
+env %>%
+    add_resource("server", 1) %>%
+    add_generator("programs", programs, function() rexp(1, lambda)) %>%
+    run(until = SIMULATION_TIME)
+
+# %%
+env %>%
+    get_mon_resources()
+
+# %%
+arrivals <- env %>%
+    get_mon_arrivals()
+arrivals
+
+# %%
+results[2] <- mean(arrivals %>% with(end_time - start_time))
+results
 
 # %% [markdown]
 # ### Алгоритм SPT
@@ -73,21 +147,38 @@ sum_of_Q_progression_sums <- sum(unlist(Q_progression_sums))
 sum_of_Q_progression_sums
 
 # %%
-T_spt <- 1 / m * sum_of_Q_progression_sums
-T_spt
+results[3] <- 1 / m * sum_of_Q_progression_sums
+results
 
 # %% [markdown]
 # #### Численно
-
-# %% [markdown]
-# ### Алгоритм Round Robin
-# Реализуем round robin.
 
 # %%
 N <- 10000
 programs <- sample(Q, N, replace = TRUE)
 programs
 
+
+# %%
+time <- 0
+
+task_schedule <- sort(programs)
+
+while (length(task_schedule) > 0) {
+    time <- time + q
+    task_schedule[1] <- task_schedule[1] - q
+
+    if (task_schedule[1] <= 0) {
+        task_schedule <- tail(task_schedule, length(task_schedule) - 1)
+    }
+}
+
+results[4] <- time / N
+results
+
+# %% [markdown]
+# ### Алгоритм Round Robin
+# Реализуем round robin.
 
 # %%
 time <- 0
@@ -103,7 +194,8 @@ while (length(task_schedule) > 0) {
     }
 }
 
-time / N
+results[5] <- time / N
+results
 
 # %%
 if (!require("simmer")) {
