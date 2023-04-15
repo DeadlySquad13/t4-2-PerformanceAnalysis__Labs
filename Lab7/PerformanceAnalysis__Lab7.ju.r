@@ -116,13 +116,26 @@ env
 
 # %%
 programs <- trajectory("programs' path") %>%
-    select(paste0("doctor", 1:3), "round-robin") %>%
+    seize("server", amount = 1) %>%
+    timeout(function() rexp(1, 1)) %>%
+    release("server", amount = 1)
+
+# %%
+programs <- trajectory("programs' path") %>%
+    select("server", "round-robin") %>%
     seize_selected(1) %>%
-    timeout(5) %>%
+    timeout(function() rexp(1, 1)) %>%
     release_selected(1)
 
 # %%
+SIMULATION_TIME <- 10000
+
 env %>%
     add_resource("server", 1) %>%
-    add_generator("programmers", programs, function() rexp(1, k / t1))
-add_generator("programmers", programs, function() rexp(1, k / t1))
+    add_generator("programs", programs, function() rexp(1, 1)) %>%
+    run(until = SIMULATION_TIME)
+
+# %%
+
+env() %>%
+    get_mon_resources()
