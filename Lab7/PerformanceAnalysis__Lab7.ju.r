@@ -34,8 +34,9 @@ print(Q)
 # Заведем таблицу результатов
 
 # %%
-results <- data.frame(0, 0, 0, 0, 0)
-colnames(results) <- c("M/M/1/infty theoretical", "M/M/1/infty practical", "SPT theoretical", "SPT practical", "Round Robin")
+results <- data.frame(0, 0, 0, 0)
+colnames(results) <- c("M/M/1/infty theoretical", "M/M/1/infty practical", "SPT", "Round Robin")
+results
 
 # %% [markdown]
 # ### СМО вида $М/М/1/\infty$
@@ -110,47 +111,6 @@ results
 # %% [markdown]
 # ### Алгоритм SPT
 
-# #### Теоретически
-# Среднее время обслуживания складывается из ожидания в очереди и времени
-# выполнения, усредненным по всем заявкам:
-# $$
-# T_{\text{сист}} = \frac{1}{m} \left( Q'_1 + \left( Q'_1 + Q'_2 \right) +
-# \left(Q'_1 + Q'_2 + Q'_3 \right) + \dots + \sum^m_{i = 1}Q'_i \right)
-# $$
-# где $Q'_i$ - $i$-й элемент массива $Q'$,
-# **отсортированного по возрастанию** массива Q.
-
-# %%
-Q_sorted <- sort(Q)
-Q_sorted
-
-# %% [markdown]
-# Суммы первых i элементов:
-
-# %%
-Q_progression_sums <- lapply(
-    seq_along(Q_sorted),
-    function(i) sum(head(Q_sorted, i))
-)
-Q_progression_sums
-
-
-# %% [markdown]
-# Итоговая сумма
-
-# %%
-sum_of_Q_progression_sums <- sum(unlist(Q_progression_sums))
-sum_of_Q_progression_sums
-
-# %%
-results[3] <- 1 / m * sum_of_Q_progression_sums
-results
-
-# %% [markdown]
-# #### Численно
-# Реализуем SPT с помощью simmer, воспользовавшись механизмом select,
-# выбирающим из очереди значение по определенной стратегии.
-
 # %%
 if (!require("simmer")) {
     install.packages("simmer")
@@ -166,7 +126,7 @@ spt.env
 # длительностью выполнения, будет иметь наименьший приоритет.
 
 # %%
-SIMULATION_TIME <- 10000
+SIMULATION_TIME <- 100000
 
 spt.env %>%
     add_resource("server", 1)
@@ -205,7 +165,7 @@ spt.arrivals <- spt.env %>%
 spt.arrivals
 
 # %%
-results[5] <- mean(spt.arrivals %>% with(end_time - start_time))
+results[3] <- mean(spt.arrivals %>% with(end_time - start_time))
 results
 
 
