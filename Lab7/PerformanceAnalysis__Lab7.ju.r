@@ -99,10 +99,6 @@ env %>%
     run(until = SIMULATION_TIME)
 
 # %%
-env %>%
-    get_mon_resources()
-
-# %%
 arrivals <- env %>%
     get_mon_arrivals()
 arrivals
@@ -178,24 +174,8 @@ results
 
 # %% [markdown]
 # ### Алгоритм Round Robin
-# Реализуем round robin.
-
-# %%
-time <- 0
-
-task_schedule <- programs
-
-while (length(task_schedule) > 0) {
-    time <- time + q
-    task_schedule[1] <- task_schedule[1] - q
-
-    if (task_schedule[1] <= 0) {
-        task_schedule <- tail(task_schedule, length(task_schedule) - 1)
-    }
-}
-
-results[5] <- time / N
-results
+# Реализуем Round Robin с помощью simmer, воспользовавшись механизмом select,
+# выбирающим из очереди значение по определенной стратегии
 
 # %%
 if (!require("simmer")) {
@@ -208,15 +188,9 @@ env
 
 # %%
 programs <- trajectory("programs' path") %>%
-    seize("server", amount = 1) %>%
-    timeout(function() rexp(1, 1)) %>%
-    release("server", amount = 1)
-
-# %%
-programs <- trajectory("programs' path") %>%
     select("server", "round-robin") %>%
     seize_selected(1) %>%
-    timeout(function() rexp(1, 1)) %>%
+    timeout(function() rexp(1, mu)) %>%
     release_selected(1)
 
 # %%
@@ -224,10 +198,22 @@ SIMULATION_TIME <- 10000
 
 env %>%
     add_resource("server", 1) %>%
-    add_generator("programs", programs, function() rexp(1, 1)) %>%
+    add_generator("programs", programs, function() rexp(1, lambda)) %>%
     run(until = SIMULATION_TIME)
 
 # %%
+arrivals <- env %>%
+    get_mon_arrivals()
+arrivals
 
-env() %>%
-    get_mon_resources()
+# %%
+results[5] <- mean(arrivals %>% with(end_time - start_time))
+results
+
+# %% [markdown]
+# Как видно, практические вычисления совпадают теоретическими с некоторой
+# погрешностью, которая уменьшается при увеличении числа экспериментов.
+
+# При этом система, выполненная с помощью алгоритма Round Robin оказалась
+# быстрее обычной системы, а система, реализованная с алгоритмом SPT - самой
+# быстрой.
