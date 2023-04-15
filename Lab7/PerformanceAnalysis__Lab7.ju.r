@@ -148,34 +148,71 @@ results
 
 # %% [markdown]
 # #### Численно
+# Реализуем SPT с помощью simmer, воспользовавшись механизмом select,
+# выбирающим из очереди значение по определенной стратегии.
 
 # %%
-N <- 10000
-programs <- sample(Q, N, replace = TRUE)
-programs
+if (!require("simmer")) {
+    install.packages("simmer")
+}
+library(simmer)
 
+spt.env <- simmer("SuperDuperSptSim")
+spt.env
+
+# %% [markdown]
+# Добавим $m$ генераторов. Каждый будет иметь приоритет в зависимости от
+# скорости выполнения программы. Генератор, создающий программы с наибольшей
+# длительностью выполнения, будет иметь наименьший приоритет.
 
 # %%
-time <- 0
+SIMULATION_TIME <- 10000
 
-task_schedule <- sort(programs)
+spt.env %>%
+    add_resource("server", 1)
 
-while (length(task_schedule) > 0) {
-    time <- time + q
-    task_schedule[1] <- task_schedule[1] - q
+Q_sorted_decr <- sort(Q, decreasing = TRUE)
 
-    if (task_schedule[1] <= 0) {
-        task_schedule <- tail(task_schedule, length(task_schedule) - 1)
-    }
+spt.programs_trajectory <- function(time_to_execute) {
+    return(
+        trajectory("programs' path") %>%
+            seize("server", 1) %>%
+            timeout(function() rexp(1, 1 / time_to_execute)) %>%
+            release("server", 1)
+    )
 }
 
-results[4] <- time / N
+for (Q_i in seq_along(Q_sorted_decr)) {
+    priority <- Q_i
+
+    name <- paste0("programs", Q_i)
+
+    spt.env %>% add_generator(
+        name,
+        spt.programs_trajectory(Q_sorted_decr[Q_i]),
+        priority = priority,
+        preemptible = priority,
+        distribution = function() rexp(1, lambda / m)
+    )
+}
+
+spt.env %>%
+    run(until = SIMULATION_TIME)
+
+# %%
+spt.arrivals <- spt.env %>%
+    get_mon_arrivals()
+spt.arrivals
+
+# %%
+results[5] <- mean(spt.arrivals %>% with(end_time - start_time))
 results
+
 
 # %% [markdown]
 # ### Алгоритм Round Robin
 # Реализуем Round Robin с помощью simmer, воспользовавшись механизмом select,
-# выбирающим из очереди значение по определенной стратегии
+# выбирающим из очереди значение по определенной стратегии.
 
 # %%
 if (!require("simmer")) {
