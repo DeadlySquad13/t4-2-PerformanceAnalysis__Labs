@@ -55,7 +55,8 @@ y <- lambda / mu
 y
 
 # %% [markdown]
-# Так как $y > 1$, поменяем $\lambda$.
+# Так как $y > 1$, поменяем $\lambda$, чтобы в системе не образовывалась
+# бесконечная очередь.
 
 # %%
 lambda <- 0.3
@@ -170,7 +171,27 @@ results
 
 # %% [markdown]
 # ### Алгоритм Round Robin
-# Реализуем Round Robin с помощью simmer.
+# Реализуем Round Robin с помощью simmer. Для этого воспользуемся механизмом
+# `leave` и `handle_unfinished`.
+# Алгоритм реализации метода Round Robin:
+# 1. Устанавливаем каждой программе, появившейся в системе, атрибут
+# `execution_time` $\in Q$. В последующем этот атрибут будет обновляться, храня
+# значение времени, которое осталось до выполнения программы.
+# 2. Занимаем ресурс (сервер) на время $ = min(q, \text{execution_time})$.
+# 3. Освобождаем ресурс (сервер).
+# 4. Уменьшаем `execution_time` на `q`.
+# 5. Если $\text{execution_time} <= 0$, программа выполнилась.
+# 6. Если $\text{execution_time} > 0$, выводим программу из траектории с помощью
+# `leave`.
+# 7. Перехватываем программу, покинувшую траекторию, с помощью
+# `handle_unfinished`, и отправляем её снова в эту же траекторию. Так, мы по факту
+# освобождаем ресурс для следующих программ, а текущую программу отправляем
+# в конец очереди, как это и нужно в Round Robin.
+
+# Выполняем пункты 2-7 для каждой программы. Замечу, что при переходе программы
+# в `handle_unfinished`, у нее будет обновленное значение `execution_time` (с
+# вычтенным квантом).
+# Следовательно, программа, проходя цикл, будет потихонечку исполняться.
 
 # %%
 if (!require("simmer")) {
@@ -178,57 +199,100 @@ if (!require("simmer")) {
 }
 library(simmer)
 
-rr.env <- simmer("SuperDuperRoundRobinSim")
-rr.env
+if (!require("parallel")) {
+    install.packages("parallel")
+}
+library(parallel)
 
-# %%
-rr.execute_program_for_quant <- trajectory() %>%
-    seize("server", 1) %>%
-    timeout(function() min(get_attribute(rr.env, "execution_time"), q)) %>%
-    set_attribute("execution_time", -q, mod = "+") %>%
-    release("server", 1) %>%
-    leave(
-        function() get_attribute(rr.env, "execution_time") > 0
-    )
+# %% [markdown]
+# Round Robin показывает очень колеблющиеся результаты в зависимости от порядка
+# заявок, приходящих в систему. Поэтому воспользуемся пакетом parallel,
+# позволяющим запустить параллельно N симуляций, используя всю мощь механизма
+# `fork` операционных систем на базе Unix.
 
-rr.programs <- trajectory() %>%
-    set_attribute("execution_time", function() sample(Q, 1)) %>%
-    handle_unfinished(
-        trajectory() %>%
-            log_(function() paste0("preempteed with execution_time: ", get_attribute(rr.env, "execution_time"))) %>%
-            join(rr.execute_program_for_quant)
-    ) %>%
-    join(rr.execute_program_for_quant)
+# Также запустим эти N симуляций для ряда $q$, чтобы посмотреть, как меняется
+# эффективность алгоритма в зависимости от значения кванта.
 
 # %%
 SIMULATION_TIME <- 10000
 
-rr.env %>%
-    add_resource("server", 1, preemptive = TRUE) %>%
-    add_generator(
-        "programs",
-        rr.programs,
-        priority = 1,
-        preemptible = 1,
-        restart = TRUE,
-        distribution = function() rexp(1, lambda)
-    ) %>%
-    run(until = SIMULATION_TIME)
+rr.simulate <- function(simulation_time, q) {
+    return(function(i) {
+        rr.env <- simmer("SuperDuperRoundRobinSim")
+
+        rr.execute_program_for_quant <- trajectory() %>%
+            seize("server", 1) %>%
+            timeout(function() min(get_attribute(rr.env, "execution_time"), q)) %>%
+            set_attribute("execution_time", -q, mod = "+") %>%
+            release("server", 1) %>%
+            leave(
+                function() get_attribute(rr.env, "execution_time") > 0
+            )
+
+        rr.programs <- trajectory() %>%
+            set_attribute("execution_time", function() sample(Q, 1)) %>%
+            handle_unfinished(
+                trajectory() %>%
+                    log_(
+                        function() paste0("preempteed with execution_time: ", get_attribute(rr.env, "execution_time")),
+                        level = 1
+                    ) %>%
+                    join(rr.execute_program_for_quant)
+            ) %>%
+            join(rr.execute_program_for_quant)
+
+        rr.env %>%
+            add_resource("server", 1, preemptive = TRUE) %>%
+            add_generator(
+                "programs",
+                rr.programs,
+                priority = 1,
+                preemptible = 1,
+                restart = TRUE,
+                distribution = function() rexp(1, lambda)
+            ) %>%
+            run(until = simulation_time) %>%
+            wrap()
+    })
+}
 
 # %%
-rr.arrivals <- rr.env %>%
-    get_mon_arrivals()
-rr.arrivals
+quants <- c(0.01 * q, 0.1 * q, q, 2 * q, 3 * q, 4 * q, 5 * q)
+
+rr.results <- mclapply(quants, function(quant) {
+    rr.envs <- mclapply(1:200, rr.simulate(SIMULATION_TIME, quant))
+
+    rr.arrivals <- rr.envs %>%
+        get_mon_arrivals()
+
+    return(mean(rr.arrivals %>% with(end_time - start_time)))
+})
 
 # %%
-results[4] <- mean(rr.arrivals %>% with(end_time - start_time))
+unlist(rr.results)
+
+# %%
+rr.experiments <- data.frame(quant = quants, result = unlist(rr.results))
+rr.experiments
+
+# %%
+results[4] <- unlist(rr.results)[1]
 results
 
 # %% [markdown]
-# Как видно, практические вычисления совпадают теоретическими с некоторой
-# погрешностью, которая уменьшается при увеличении числа экспериментов.
+## Вывод по Round Robin для разных $q$
+# По полученным данным можно заметить, что система демонстрирует лучшие
+# значения при малых $q \le 1$, причем чем квант меньше, тем ближе результат
+# к SPT. При $q > 1$ система начинает стремиться к значениям, полученных при
+# симуляции обычной $M/M/1/\infty$, и колебаться около них.
 
-# При этом система, выполненная с помощью алгоритма Round Robin оказалась
-# быстрее обычной системы, а система, реализованная с алгоритмом SPT - самой
-# быстрой.
+# Смею предположить, что данные также сильно зависят от вектора $Q$.
+# Чем больше среднее значение $Q$, тем "неприхотливее" будет система к величине
+# $q$, а значит критическое значение кванта, при котором система будет
+# становиться эффективнее, будет выше.
 
+# %% [markdown]
+## Вывод
+# Как видно, система, выполненная с помощью алгоритма Round Robin оказалась
+# эффективнее обычной системы, а система, реализованная с алгоритмом SPT - самой
+# эффективной (с точки зрения среднего времени пребывания в системе).
