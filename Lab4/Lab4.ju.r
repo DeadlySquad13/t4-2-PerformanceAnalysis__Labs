@@ -75,7 +75,7 @@ View(data.frame(k, m, t1, t2))
 
 # %%
 results <- data.frame(probability = c("-", "-"), T = c("-", "-"), Lqueue = c("-", "-"))
-row.names(results) <- c('theoretical', 'practical')
+row.names(results) <- c("theoretical", "practical")
 results
 
 # %% [markdown]
@@ -176,7 +176,7 @@ Lqueue
 results
 
 # %% [markdown]
-# Как видно, очередь система работает достаточно быстро, чтобы не накапливать очередь.
+# Как видно, система работает достаточно быстро, чтобы не накапливать очередь.
 # Это подтверждается и при сравнении интенсивностей поступления / обработки программ.
 
 # %% [markdown]
@@ -225,7 +225,9 @@ arrivals <- get_mon_arrivals(env)
 arrivals
 
 # %%
-T <-arrivals %>% subset(finished) %>% with(mean(end_time - start_time))
+T <- arrivals %>%
+    subset(finished) %>%
+    with(mean(end_time - start_time))
 results$T[2] <- T
 
 # %% [markdown]
@@ -244,7 +246,7 @@ results
 
 # %%
 mm1.results <- data.frame(probability = c("-", "-"), T = c("-", "-"), Lqueue = c("-", "-"))
-row.names(mm1.results) <- c('theoretical', 'practical')
+row.names(mm1.results) <- c("theoretical", "practical")
 mm1.results
 
 # %% [markdown]
@@ -291,8 +293,7 @@ mm1.Lqueue
 mm1.results
 
 # %% [markdown]
-# Как видно, очередь система работает достаточно быстро, чтобы не накапливать очередь.
-# Это подтверждается и при сравнении интенсивностей поступления / обработки программ.
+# Как видно, система при $m=1$ работает хуже исходной.
 
 # %% [markdown]
 # ### Численно для $m = 1$
@@ -338,7 +339,9 @@ mm1.results$probability[2] <- mm1.probability
 mm1.arrivals <- get_mon_arrivals(env)
 
 # %%
-mm1.T <- mm1.arrivals %>% subset(finished) %>% with(mean(end_time - start_time))
+mm1.T <- mm1.arrivals %>%
+    subset(finished) %>%
+    with(mean(end_time - start_time))
 mm1.results$T[2] <- T
 
 # %% [markdown]
