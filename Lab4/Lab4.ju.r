@@ -192,15 +192,7 @@ SIMULATION_TIME <- 10000
 
 env <- simmer("SupaDupaSim")
 
-limit_programs_in_system <- trajectory() %>%
-    leave(
-        function() as.integer(
-            get_queue_count(env, "server") + get_seized(env, "server") >= k
-        )
-    )
-
 programs <- trajectory() %>%
-    # join(limit_programs_in_system) %>%
     seize("server", 1) %>%
     timeout(function() rexp(1, 1 / t1)) %>%
     release("server", 1)
@@ -245,3 +237,116 @@ results$Lqueue[2] <- Lqueue
 
 # %%
 results
+
+# %% [markdown]
+# ### Для $m = 1$
+# Зададим таблицу результатов для $m = 1$.
+
+# %%
+mm1.results <- data.frame(probability = c("-", "-"), T = c("-", "-"), Lqueue = c("-", "-"))
+row.names(mm1.results) <- c('theoretical', 'practical')
+mm1.results
+
+# %% [markdown]
+# ### Теоретически для $m = 1$
+
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал.
+
+# $$
+# 1 - P_0 = \frac{\lambda}{\mu}
+# $$
+
+# %%
+mm1.probability <- lambda_1 / miu
+mm1.results$probability[1] <- mm1.probability
+mm1.probability
+
+# %% [markdown]
+# #### 2. Среднее время до получения пользователем результатов реализации.
+# Вычислим среднее время до получения пользователем результатов реализации:
+
+# $$
+# T_{\text{сист}} = \frac{1}{\mu(1 - \rho)}
+# $$
+
+# %%
+mm1.T <- 1 / (miu * (1 - ro))
+mm1.results$T[1] <- mm1.T
+mm1.T
+
+# %% [markdown]
+# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
+# Она же средняя длина очереди:
+# $$
+# L_{\text{оч}} = \frac{\rho^{2}}{1 - \rho}
+# $$
+
+# %%
+mm1.Lqueue <- ro^2 / (1 - ro)
+mm1.results$Lqueue[1] <- mm1.Lqueue
+mm1.Lqueue
+
+# %%
+mm1.results
+
+# %% [markdown]
+# Как видно, очередь система работает достаточно быстро, чтобы не накапливать очередь.
+# Это подтверждается и при сравнении интенсивностей поступления / обработки программ.
+
+# %% [markdown]
+# ### Численно для $m = 1$
+
+# %%
+if (!require("simmer")) {
+    install.packages("simmer")
+}
+library(simmer)
+
+SIMULATION_TIME <- 10000
+
+env <- simmer("SupaDupaSim")
+
+programs <- trajectory() %>%
+    seize("server", 1) %>%
+    timeout(function() rexp(1, 1 / t1)) %>%
+    release("server", 1)
+
+env %>%
+    add_resource("server", capacity = 1, queue_size = k - 1) %>%
+    add_generator(
+        "programs",
+        programs,
+        distribution = function() rexp(1, lambda_k)
+    ) %>%
+    run(until = SIMULATION_TIME)
+
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал.
+
+# %%
+mm1.resources <- get_mon_resources(env)
+
+# %%
+mm1.probability <- mm1.resources %>% with(sum(server == 1) / length(server))
+mm1.results$probability[2] <- mm1.probability
+
+# %% [markdown]
+# #### 2. Среднее время до получения пользователем результатов реализации.
+
+# %%
+mm1.arrivals <- get_mon_arrivals(env)
+
+# %%
+mm1.T <- mm1.arrivals %>% subset(finished) %>% with(mean(end_time - start_time))
+mm1.results$T[2] <- T
+
+# %% [markdown]
+# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
+
+# %%
+mm1.Lqueue <- mm1.resources %>% with(mean(queue))
+mm1.results$Lqueue[2] <- mm1.Lqueue
+
+# %%
+mm1.results
