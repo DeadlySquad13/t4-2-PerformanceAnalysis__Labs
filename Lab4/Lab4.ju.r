@@ -70,7 +70,7 @@ lambda_k
 # %%
 View(data.frame(k, m, t1, t2))
 
-# %%
+# %% [markdown]
 # Зададим таблицу результатов.
 
 # %%
