@@ -59,7 +59,7 @@ y
 # бесконечная очередь.
 
 # %%
-lambda <- 0.3
+lambda <- 0.31
 
 # %%
 t2 <- mean(Q)
@@ -217,12 +217,7 @@ library(parallel)
 # позволяющим запустить параллельно N симуляций, используя всю мощь механизма
 # `fork` операционных систем на базе Unix.
 
-# Также запустим эти N симуляций для ряда значений разных $q$, чтобы посмотреть, как меняется
-# эффективность алгоритма в зависимости от значения кванта.
-
 # %%
-SIMULATION_TIME <- 10000
-
 rr.simulate <- function(simulation_time, q) {
     return(function(i) {
         rr.env <- simmer("SuperDuperRoundRobinSim")
@@ -263,11 +258,19 @@ rr.simulate <- function(simulation_time, q) {
     })
 }
 
+# %% [markdown]
+# Также запустим эти N симуляций для ряда значений разных $q$, чтобы посмотреть, как меняется
+# эффективность алгоритма в зависимости от значения кванта.
+
+
 # %%
+SIMULATION_TIME <- 50000
+N <- 2
+
 quants <- c(0.01 * q, 0.1 * q, q, 2 * q, 3 * q, 4 * q, 5 * q)
 
 rr.results <- mclapply(quants, function(quant) {
-    rr.envs <- mclapply(1:200, rr.simulate(SIMULATION_TIME, quant))
+    rr.envs <- mclapply(1:N, rr.simulate(SIMULATION_TIME, quant))
 
     rr.arrivals <- rr.envs %>%
         get_mon_arrivals()
@@ -283,7 +286,7 @@ rr.experiments <- data.frame(quant = quants, result = unlist(rr.results))
 rr.experiments
 
 # %%
-results[4] <- unlist(rr.results)[1]
+results[4] <- unlist(rr.results)[2]
 results
 
 # %% [markdown]
@@ -302,6 +305,4 @@ results
 ## Вывод
 # Как видно, система, выполненная с помощью алгоритма Round Robin оказалась
 # эффективнее обычной системы, а система, реализованная с алгоритмом SPT - самой
-# эффективной (с точки зрения среднего времени пребывания в системе).
-# эффективной (с точки зрения среднего времени пребывания в системе).
 # эффективной (с точки зрения среднего времени пребывания в системе).
