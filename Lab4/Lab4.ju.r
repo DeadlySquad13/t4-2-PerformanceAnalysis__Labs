@@ -70,6 +70,14 @@ lambda_k
 # %%
 View(data.frame(k, m, t1, t2))
 
+# %%
+# Зададим таблицу результатов.
+
+# %%
+results <- data.frame(probability = c("-", "-"), T = c("-", "-"), Lqueue = c("-", "-"))
+row.names(results) <- c('theoretical', 'practical')
+results
+
 # %% [markdown]
 # ### Теоретически
 
@@ -92,14 +100,17 @@ ro <- lambda_1 / miu
 ro
 
 # %%
-i1 <- 1:m
+i1 <- 0:m
 parts_of_sum1 <- c(factorial(k) * ro^i1 / (factorial((k - i1)) * factorial(i1)))
 
-i2 <- 1:(k-m)
-parts_of_sum2 <- c(factorial(k) * ro^(m+i2) / (factorial(m) * factorial((k - m - i2)) * m^i2))
+i2 <- 1:(k - m)
+parts_of_sum2 <- c(factorial(k) * ro^(m + i2) / (factorial(m) * factorial((k - m - i2)) * m^i2))
 
 P0 <- (sum(parts_of_sum1) + sum(parts_of_sum2))^(-1)
 P0
+
+# %%
+P0 * k * ro
 
 # %% [markdown]
 # Тогда вероятность того, что $i$ серверов занято:
@@ -113,15 +124,16 @@ P0
 get_Pi <- function(part) part * P0
 
 # %%
-Pi <- lapply(parts_of_sum1[1:m-1], get_Pi)
+Pi <- lapply(parts_of_sum1[1:m], get_Pi)
 Pi
 
 # %% [markdown]
-# Тогда $\sum_{i = 0}^{m - 1} P_i$ -  вероятность того, что хотя бы один сервер
+# Тогда $\sum_{i = 0}^{m} P_i$ -  вероятность того, что хотя бы один сервер
 # будет доступен. Следовательно, обратная вероятность и будет нашим ответом.
 
 # %%
-probability <- 1 - sum(unlist(Pi)) + P0
+probability <- 1 - sum(unlist(Pi))
+results$probability[1] <- probability
 probability
 
 # %% [markdown]
@@ -144,6 +156,7 @@ Lambda
 
 # %%
 T <- Lsys / Lambda
+results$T[1] <- T
 T
 
 # %% [markdown]
@@ -155,9 +168,80 @@ T
 # $$
 
 # %%
-Lqueue <- ro ^ (m+1) / (factorial(m) * m) * P0 * 1 / (1 - ro / m) ^ 2
+Lqueue <- ro^(m + 1) / (factorial(m) * m) * P0 * 1 / (1 - ro / m)^2
+results$Lqueue[1] <- Lqueue
 Lqueue
 
+# %%
+results
+
 # %% [markdown]
-Как видно, очередь система работает достаточно быстро, чтобы не накапливать очередь.
-Это подтверждается и при сравнении интенсивностей поступления / обработки программ.
+# Как видно, очередь система работает достаточно быстро, чтобы не накапливать очередь.
+# Это подтверждается и при сравнении интенсивностей поступления / обработки программ.
+
+# %% [markdown]
+# ### Численно
+
+# %%
+if (!require("simmer")) {
+    install.packages("simmer")
+}
+library(simmer)
+
+SIMULATION_TIME <- 10000
+
+env <- simmer("SupaDupaSim")
+
+limit_programs_in_system <- trajectory() %>%
+    leave(
+        function() as.integer(
+            get_queue_count(env, "server") + get_seized(env, "server") >= k
+        )
+    )
+
+programs <- trajectory() %>%
+    # join(limit_programs_in_system) %>%
+    seize("server", 1) %>%
+    timeout(function() rexp(1, 1 / t1)) %>%
+    release("server", 1)
+
+env %>%
+    add_resource("server", capacity = m, queue_size = k - m) %>%
+    add_generator(
+        "programs",
+        programs,
+        distribution = function() rexp(1, lambda_k)
+    ) %>%
+    run(until = SIMULATION_TIME)
+
+# %% [markdown]
+# #### 1. Вероятность того, что программа не будет выполнена сразу же, как только она поступила на терминал.
+
+# %%
+resources <- get_mon_resources(env)
+resources
+
+# %%
+probability <- resources %>% with(sum(server == m) / length(server)) / 2
+results$probability[2] <- probability
+
+# %% [markdown]
+# #### 2. Среднее время до получения пользователем результатов реализации.
+
+# %%
+arrivals <- get_mon_arrivals(env)
+arrivals
+
+# %%
+T <-arrivals %>% subset(finished) %>% with(mean(end_time - start_time))
+results$T[2] <- T
+
+# %% [markdown]
+# #### 3. Среднее количество программ, ожидающих выполнения на сервере.
+
+# %%
+Lqueue <- resources %>% with(mean(queue))
+results$Lqueue[2] <- Lqueue
+
+# %%
+results
