@@ -182,17 +182,37 @@ rr.env <- simmer("SuperDuperRoundRobinSim")
 rr.env
 
 # %%
-rr.programs <- trajectory("rr.programs' path") %>%
+rr.execute_program_for_quant <- trajectory() %>%
     seize("server", 1) %>%
-    timeout(function() rexp(1, mu)) %>%
-    release("server", 1)
+    timeout(function() min(get_attribute(rr.env, "execution_time"), q)) %>%
+    set_attribute("execution_time", -q, mod = "+") %>%
+    release("server", 1) %>%
+    leave(
+        function() get_attribute(rr.env, "execution_time") > 0
+    )
+
+rr.programs <- trajectory() %>%
+    set_attribute("execution_time", function() sample(Q, 1)) %>%
+    handle_unfinished(
+        trajectory() %>%
+            log_(function() paste0("preempteed with execution_time: ", get_attribute(rr.env, "execution_time"))) %>%
+            join(rr.execute_program_for_quant)
+    ) %>%
+    join(rr.execute_program_for_quant)
 
 # %%
 SIMULATION_TIME <- 10000
 
 rr.env %>%
-    add_resource("server", 1) %>%
-    add_generator("rr.programs", rr.programs, function() rexp(1, lambda)) %>%
+    add_resource("server", 1, preemptive = TRUE) %>%
+    add_generator(
+        "programs",
+        rr.programs,
+        priority = 1,
+        preemptible = 1,
+        restart = TRUE,
+        distribution = function() rexp(1, lambda)
+    ) %>%
     run(until = SIMULATION_TIME)
 
 # %%
@@ -211,3 +231,4 @@ results
 # При этом система, выполненная с помощью алгоритма Round Robin оказалась
 # быстрее обычной системы, а система, реализованная с алгоритмом SPT - самой
 # быстрой.
+
