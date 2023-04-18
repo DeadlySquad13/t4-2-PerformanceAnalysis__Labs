@@ -195,7 +195,7 @@ results
 # освобождаем ресурс для следующих программ, а текущую программу отправляем
 # в конец очереди, как это и нужно в Round Robin.
 
-# Выполняем пункты 2-7 для каждой программы. Замечу, что при переходе программы
+# Замечу, что при переходе программы
 # в `handle_unfinished`, у нее будет обновленное значение `execution_time` (с
 # вычтенным квантом).
 # Следовательно, программа, проходя цикл, будет потихонечку исполняться.
@@ -286,7 +286,7 @@ rr.experiments <- data.frame(quant = quants, result = unlist(rr.results))
 rr.experiments
 
 # %%
-results[4] <- unlist(rr.results)[2]
+results[4] <- unlist(rr.results)[3]
 results
 
 # %% [markdown]
