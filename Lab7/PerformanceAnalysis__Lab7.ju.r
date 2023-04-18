@@ -34,7 +34,7 @@ print(Q)
 # Заведем таблицу результатов
 
 # %%
-results <- data.frame(0, 0, 0, 0)
+results <- data.frame("-", "-", "-", "-")
 colnames(results) <- c("M/M/1/infty theoretical", "M/M/1/infty practical", "SPT", "Round Robin")
 results
 
@@ -137,7 +137,7 @@ spt.programs_trajectory <- function(time_to_execute) {
     return(
         trajectory("programs' path") %>%
             seize("server", 1) %>%
-            timeout(function() rexp(1, 1 / time_to_execute)) %>%
+            timeout(time_to_execute) %>%
             release("server", 1)
     )
 }
@@ -168,11 +168,9 @@ spt.arrivals
 results[3] <- mean(spt.arrivals %>% with(end_time - start_time))
 results
 
-
 # %% [markdown]
 # ### Алгоритм Round Robin
-# Реализуем Round Robin с помощью simmer, воспользовавшись механизмом select,
-# выбирающим из очереди значение по определенной стратегии.
+# Реализуем Round Robin с помощью simmer.
 
 # %%
 if (!require("simmer")) {
@@ -180,31 +178,30 @@ if (!require("simmer")) {
 }
 library(simmer)
 
-env <- simmer("SuperDuperSim")
-env
+rr.env <- simmer("SuperDuperRoundRobinSim")
+rr.env
 
 # %%
-programs <- trajectory("programs' path") %>%
-    select("server", "round-robin") %>%
-    seize_selected(1) %>%
+rr.programs <- trajectory("rr.programs' path") %>%
+    seize("server", 1) %>%
     timeout(function() rexp(1, mu)) %>%
-    release_selected(1)
+    release("server", 1)
 
 # %%
 SIMULATION_TIME <- 10000
 
-env %>%
+rr.env %>%
     add_resource("server", 1) %>%
-    add_generator("programs", programs, function() rexp(1, lambda)) %>%
+    add_generator("rr.programs", rr.programs, function() rexp(1, lambda)) %>%
     run(until = SIMULATION_TIME)
 
 # %%
-arrivals <- env %>%
+rr.arrivals <- rr.env %>%
     get_mon_arrivals()
-arrivals
+rr.arrivals
 
 # %%
-results[5] <- mean(arrivals %>% with(end_time - start_time))
+results[4] <- mean(rr.arrivals %>% with(end_time - start_time))
 results
 
 # %% [markdown]
