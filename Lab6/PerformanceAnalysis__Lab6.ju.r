@@ -387,32 +387,69 @@ T
 
 # %% [markdown]
 # $$
-# P_0 = \left(1 + \frac{4\lambda}{\mu_{\text{общ}}} + \frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2} + \ldots + \frac{4!\lambda^4}{\mu_{\text{общ}}^4}\right)^{-1}
+# P_0 = \left(1 + \frac{K\lambda}{\mu_{\text{общ}}} + \frac{K(K-1)\lambda^2}{\mu_{\text{общ}}^2} + \ldots + \frac{K!\lambda^K}{\mu_{\text{общ}}^K}\right)^{-1}
 # $$
 
 # %% [markdown]
-# $$
-# P_1 = P_0 \frac{4\lambda}{\mu_{\text{общ}}}
-# $$
+# Пусть $\mu_{\text{общ}} = \frac{\lambda'}{2}$. Тогда:
+
+# %%
+mu_ <- 0.1
+y_ <- lambda / mu_
+y_
+
+# %%
+
+P0 <- (1 +
+    K * y_ +
+    K * (K-1) * y_^2 +
+    K * (K-1) * (K-2) * y_^3 +
+    K * (K-1) * (K-2) * (K-3) * y_^K
+)^(-1)
+P0
 
 # %% [markdown]
 # $$
-# P_2 = P_0 \frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# P_1 = P_0 \frac{K\lambda}{\mu_{\text{общ}}}
 # $$
+
+# %%
+P1 <- P0 * K * y_
+P1
 
 # %% [markdown]
 # $$
-# P_3 = P_0\frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# P_2 = P_0 \frac{K\lambda^2}{\mu_{\text{общ}}^2}
 # $$
+
+# %%
+P2 <- P1 * (K - 1) *  y_
+P2
 
 # %% [markdown]
 # $$
-# P_4 = P_0\frac{4(4-1)\lambda^2}{\mu_{\text{общ}}^2}
+# P_3 = P_0\frac{K\lambda^3}{\mu_{\text{общ}}^3}
 # $$
+
+# %%
+P3 <- P2 * (K - 2) * y_
+P3
 
 # %% [markdown]
 # $$
-# L_{\text{сист}} = \sum_{k=1}^4 k \cdot P_k
+# P_K = P_0\frac{K\lambda^K}{\mu_{\text{общ}}^K}
+# $$
+
+# %%
+P4 <- P3 * (K - 3) * y_
+P4
+
+# %%
+P0 + P1 + P2 + P3 + P4
+
+# %% [markdown]
+# $$
+# L_{\text{сист}} = \sum_{k=1}^K k \cdot P_k
 # $$
 
 # %% [markdown]
