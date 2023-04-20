@@ -512,26 +512,21 @@ mean_length
 # Построим график и сравним его со значением $W_\text{оч}$ (черная горизонтальная прямая), найденным теоретически:
 
 # %%
-plot(arrivals, metric = "waiting_time", names = "server", items = "system") +
-    coord_cartesian(xlim = c(0, SIMULATION_TIME), ylim = c(0, 100)) +
-    geom_hline(yintercept = W)
-
+W <- mean_length / absolute_flow_capacity
+W
 
 # %% [markdown]
 # #### Среднее число заявок в системе
 # Среднее число заявок в системе сравним с теоретическим, проанализируя график использования
 # ресурса `server`:
 
-# %%
-plot(resources, metric = "usage", names = "server", items = "system") +
-    geom_hline(yintercept = mean_number_of_requests)
-
 # %% [markdown]
-# По этому графику сложно судить, поэтому дополнительно рассчитаем значение,
+# Рассчитаем значение,
 # воспользовавшись таблицей использования ресурсов:
 
 # %%
-resources %>% with(mean(queue) + mean(server))
+mean_number_of_requests <- resources %>% with(mean(server) + mean(system))
+mean_number_of_requests
 
 # %% [markdown]
 # #### Среднее время нахождения заявок в системе $T$
@@ -539,9 +534,8 @@ resources %>% with(mean(queue) + mean(server))
 # с $W$ - сравним два графика:
 
 # %%
-plot(arrivals, metric = "flow_time", names = "server", items = "system") +
-    coord_cartesian(xlim = c(0, 80000), ylim = c(0, 100)) +
-    geom_hline(yintercept = T)
+T <- mean_number_of_requests / absolute_flow_capacity
+T
 
 # %% [markdown]
 # ### Выводы
