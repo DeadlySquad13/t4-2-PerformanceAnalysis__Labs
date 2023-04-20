@@ -422,71 +422,59 @@ T
 # $$
 
 # %% [markdown]
-# Пусть $\mu_{\text{общ}} = 0.1 < \lambda'$. Тогда:
+# #### Итерация 1
+# Пусть $\mu_{\text{общ}} = 0.15 < \lambda'$. Тогда:
 
 # %%
-mu_ <- 0.1
+mu_ <- 0.15
 y_ <- lambda / mu_
 y_
 
-# %%
+# %% [markdown]
+# Каждый член суммы можно также представить:
+# $$
+# \text{sum_part}_i =\frac{K!}{(K-i)!} \cdot \frac{\lambda}{\mu_{\text{общ}}}
+# $$
 
-P0 <- (1 +
-    K * y_ +
-    K * (K-1) * y_^2 +
-    K * (K-1) * (K-2) * y_^3 +
-    K * (K-1) * (K-2) * (K-3) * y_^K
+# %%
+i <- 0:K
+sum_parts <- c(factorial(K) / factorial(K - i) * y_^i)
+sum_parts
+
+# %%
+P0 <- (sum(sum_parts)
 )^(-1)
 P0
 
 # %% [markdown]
 # $$
-# P_1 = P_0 \frac{K\lambda}{\mu_{\text{общ}}}
+# P_1 = P_0 \frac{K\lambda}{\mu_{\text{общ}}} = P_0 \cdot \text{sum_part}_1 \\
+# P_2 = P_1 \frac{(K - 1)\lambda}{\mu_{\text{общ}}} = P_0 \cdot \text{sum_part}_2 \\
+# P_3 = P_2\frac{(K - 2)\lambda}{\mu_{\text{общ}}} = P_0 \cdot
+# \text{sum_part}_3 \\
+# P_i = P_{i-1}\frac{(K - (i - 1))\lambda}{\mu_{\text{общ}}} = P_0 \cdot
+# \text{sum_part}_i
 # $$
 
+
 # %%
-P1 <- P0 * K * y_
-P1
+Pi <- unlist(lapply(sum_parts, function(sum_part) P0 * sum_part))
+Pi
 
 # %% [markdown]
-# $$
-# P_2 = P_0 \frac{K\lambda^2}{\mu_{\text{общ}}^2}
-# $$
+# Проверим, что вероятности имеют адекватные значения.
 
 # %%
-P2 <- P1 * (K - 1) *  y_
-P2
-
-# %% [markdown]
-# $$
-# P_3 = P_0\frac{K\lambda^3}{\mu_{\text{общ}}^3}
-# $$
-
-# %%
-P3 <- P2 * (K - 2) * y_
-P3
-
-# %% [markdown]
-# $$
-# P_K = P_0\frac{K\lambda^K}{\mu_{\text{общ}}^K}
-# $$
-
-# %%
-P4 <- P3 * (K - 3) * y_
-P4
-
-# %%
-P0 + P1 + P2 + P3 + P4
+sum(Pi)
 
 # %% [markdown]
 # $$
 # L_{\text{сист}} = \sum_{k=1}^K k \cdot P_k
 # $$
 
-# %% [markdown]
-# $$
-# T_{\text{сист}} = \frac{L_{\text{сист}}}{\lambda(4-L_{\text{сист}})}
-# $$
+# %%
+mean_number_of_requests1 <- sum(c(1:K) * Pi[2:(K+1)])
+mean_number_of_requests1
 
 # %% [markdown]
 # Во второй модели будем считать, что в системе постоянно циркулируют
@@ -500,10 +488,30 @@ P0 + P1 + P2 + P3 + P4
 # ![Servers graph](./Servers_graph.png)
 
 # %% [markdown]
+# В данной итерации, округляя, мы получили $[L_{\text{сист}} \approx 3.47] = 3$
+
+# %% [markdown]
 # $$
 # \nu_n = (1-p)\nu \cdot \min{(N,L_{\text{сист}}-n)}, n=0, \ldots, L_{\text{сист}} - 1 \\
-# \mu_n = \mu \cdot \min{(M, n)}, n=1, 2, \ldots, L_{\text{сист}}
 # $$
+
+# %%
+mean_number_of_requests1 <- round(mean_number_of_requests1)
+n <- 0:(mean_number_of_requests1 - 1)
+
+nu_n <- unlist(lapply(n, function(n) (1 - p) * nu * min(N, mean_number_of_requests1 - n)))
+nu_n
+
+# %% [markdown]
+# $$
+# \mu_k = \mu \cdot \min{(M, k)}, k=1, 2, \ldots, L_{\text{сист}}
+# $$
+
+# %%
+k <- 1:mean_number_of_requests1
+
+mu_k <- unlist(lapply(k, function(k) mu * min(M, k)))
+mu_k
 
 # %% [markdown]
 # Аналогичным образом посчитаем финальные вероятности:
@@ -511,16 +519,174 @@ P0 + P1 + P2 + P3 + P4
 # \pi_0 = \left(1+\frac{\nu_0}{\mu_1}+\frac{\nu_0\nu_1}{\mu_1\mu_2}+\ldots\right)^{-1} \\
 # \pi_1=\pi_0\cdot \frac{\nu_0}{\mu_1} \\
 # \pi_2=\pi_0\cdot \frac{\nu_0\nu_1}{\mu_1\mu_2} \\
+# \dots
 # $$
+
+# %%
+sum_parts <- c()
+sum_parts[1] <- 1
+sum_parts[2] <- sum_parts[1] * nu_n[1] / mu_k[1]
+sum_parts[3] <- sum_parts[2] * nu_n[2] / mu_k[2]
+sum_parts[4] <- sum_parts[3] * nu_n[3] / mu_k[3]
+
+pi_0 <- (sum(sum_parts))^(-1)
+pi_0
+
+# %%
+pi_i <- unlist(lapply(sum_parts, function(sum_part) pi_0 * sum_part))
+pi_i
+
+# %% [markdown]
+# Проверим, что вероятности имеют адекватные значения.
+
+# %%
+sum(pi_i)
 
 # %% [markdown]
 # Тогда:
 # $$
-# \mu_{\text{общ}}=\sum_{n=1}^{L_{\text{сист}}}\pi_n\cdot \mu_n\tag{11}
+# \mu_{\text{общ}} = \sum_{n=1}^{L_{\text{сист}}}\pi_n\cdot \mu_n
 # $$
+
+# %%
+mu_ <- sum(mu_k[1:(mean_number_of_requests1)] * pi_i[2:(mean_number_of_requests1 + 1)])
+mu_
+
+# %% [markdown]
+# #### Итерация 2
+
+# %%
+y_ <- lambda / mu_
+y_
+
+# %% [markdown]
+# Каждый член суммы можно также представить:
+# $$
+# \text{sum_part}_i =\frac{K!}{(K-i)!} \cdot \frac{\lambda}{\mu_{\text{общ}}}
+# $$
+
+# %%
+i <- 0:K
+sum_parts <- c(factorial(K) / factorial(K - i) * y_^i)
+sum_parts
+
+# %%
+P0 <- (sum(sum_parts)
+)^(-1)
+P0
+
+# %% [markdown]
+# $$
+# P_1 = P_0 \frac{K\lambda}{\mu_{\text{общ}}} = P_0 \cdot \text{sum_part}_1 \\
+# P_2 = P_1 \frac{(K - 1)\lambda}{\mu_{\text{общ}}} = P_0 \cdot \text{sum_part}_2 \\
+# P_3 = P_2\frac{(K - 2)\lambda}{\mu_{\text{общ}}} = P_0 \cdot
+# \text{sum_part}_3 \\
+# P_i = P_{i-1}\frac{(K - (i - 1))\lambda}{\mu_{\text{общ}}} = P_0 \cdot
+# \text{sum_part}_i
+# $$
+
+
+# %%
+Pi <- unlist(lapply(sum_parts, function(sum_part) P0 * sum_part))
+Pi
+
+# %% [markdown]
+# Проверим, что вероятности имеют адекватные значения.
+
+# %%
+sum(Pi)
+
+# %% [markdown]
+# $$
+# L_{\text{сист}} = \sum_{k=1}^K k \cdot P_k
+# $$
+
+# %%
+mean_number_of_requests1 <- sum(c(1:K) * Pi[2:(K+1)])
+mean_number_of_requests1
+
+# %% [markdown]
+# В данной итерации, округляя, мы получили $[L_{\text{сист}} \approx 3.47]
+# = 3$. Ясно, что снова выбрав 3, ничего не поменяется, поэтому попробуем
+# $L_{\text{сист}} = 2$.
+
+# %% [markdown]
+# $$
+# \nu_n = (1-p)\nu \cdot \min{(N,L_{\text{сист}}-n)}, n=0, \ldots, L_{\text{сист}} - 1 \\
+# $$
+
+# %%
+mean_number_of_requests1 <- 2
+n <- 0:(mean_number_of_requests1 - 1)
+
+nu_n <- unlist(lapply(n, function(n) (1 - p) * nu * min(N, mean_number_of_requests1 - n)))
+nu_n
+
+# %% [markdown]
+# $$
+# \mu_k = \mu \cdot \min{(M, k)}, k=1, 2, \ldots, L_{\text{сист}}
+# $$
+
+# %%
+k <- 1:mean_number_of_requests1
+
+mu_k <- unlist(lapply(k, function(k) mu * min(M, k)))
+mu_k
+
+# %% [markdown]
+# Аналогичным образом посчитаем финальные вероятности:
+# $$
+# \pi_0 = \left(1+\frac{\nu_0}{\mu_1}+\frac{\nu_0\nu_1}{\mu_1\mu_2}+\ldots\right)^{-1} \\
+# \pi_1=\pi_0\cdot \frac{\nu_0}{\mu_1} \\
+# \pi_2=\pi_0\cdot \frac{\nu_0\nu_1}{\mu_1\mu_2} \\
+# \dots
+# $$
+
+# %%
+sum_parts <- c()
+sum_parts[1] <- 1
+sum_parts[2] <- sum_parts[1] * nu_n[1] / mu_k[1]
+sum_parts[3] <- sum_parts[2] * nu_n[2] / mu_k[2]
+
+pi_0 <- (sum(sum_parts))^(-1)
+pi_0
+
+# %%
+pi_i <- unlist(lapply(sum_parts, function(sum_part) pi_0 * sum_part))
+pi_i
+# %% [markdown]
+# Проверим, что вероятности имеют адекватные значения.
+
+# %%
+sum(pi_i)
+
+# %% [markdown]
+# Тогда:
+# $$
+# \mu_{\text{общ}} = \sum_{n=1}^{L_{\text{сист}}}\pi_n\cdot \mu_n
+# $$
+
+# %%
+mu_ <- sum(mu_k[1:(mean_number_of_requests1)] * pi_i[2:(mean_number_of_requests1 + 1)])
+mu_
+
+# %% [markdown]
+# $$
+# T_{\text{сист}} = \frac{L_{\text{сист}}}{\lambda(K-L_{\text{сист}})}
+# $$
+
+# %%
+T <- mean_number_of_requests1 / (lambda * (K - mean_number_of_requests1))
+T
+
+# %% [markdown]
+# #### Итого
+
+# %%
+c(mu_, T)
 
 # %% [markdown]
 # ### Выводы
-# Как видно, теоретически вычисленные значения с некоторой точностью совпадают
-# со значениями, полученным численным методом. При увеличении количества
-# экспериментов 𝑁 точность только увеличивается.
+# Как видно, метод укрупнённых состояний позволяет упростить вычисления в очень
+# больших системах. Однако приходится пожертвовать точностью вычислений, что
+# связано с округление $L_{\text{сист}}$ до целых.
