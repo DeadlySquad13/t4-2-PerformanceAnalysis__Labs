@@ -262,81 +262,112 @@ T
 # ### Численно
 # Построим с помощью пакета simmer симуляцию системы.
 
-
 # %%
 if (!require("simmer")) {
     install.packages("simmer")
 }
 library(simmer)
-if (!require("simmer.plot")) {
-    install.packages("simmer.plot")
-}
-library(simmer.plot)
 
-env <- simmer("SuperDuperSim")
-env
+if (!require("parallel")) {
+    install.packages("parallel")
+}
+library(parallel)
 
 # %% [markdown]
 Зададим траекторию отказа в случае полной очереди:
 
 # %%
-queue <- trajectory("program's path") %>%
-    # set_attribute("number_of_free_programmers", function() get_global(env, "number_of_free_programmers") - 1) %>%
-    set_source("program", function() rexp(1, 1 / lambda )) %>%
+antivirus_server_path <- trajectory("antivrus server path") %>%
     seize("antivirus_server", amount = 1) %>%
-    timeout(function() rexp(1, 1 / nu)) %>%
-    log_(function() {
-        seized <- get_seized(env, resources = c('antivirus_server', 'server'))
-
-        return(paste0(seized[1], seized[2]))
-    }) %>%
+    timeout(function() rexp(1, nu)) %>%
     release("antivirus_server", amount = 1) %>%
     leave(
           function() runif(1) < p,
-          out = trajectory() %>% log_("Antivirus found")
+          out = trajectory() %>% log_("Antivirus found", level = 3)
     ) %>%
-    log_("No antivirus found") %>%
+    log_("No antivirus found", level = 3)
+
+main_server <- trajectory("main server path") %>%
     seize("server", amount = 1) %>%
-    timeout(function() rexp(1, 1 / mu)) %>%
+    timeout(function() rexp(1, mu)) %>%
     release("server", amount = 1)
 
 # %%
-SIMULATION_TIME <- FINISH_TIME
+SIMULATION_TIME <- 10000
 
-env %>%
-    add_resource(
-        "antivirus_server",
-        capacity = N,
-        queue_size = m1
-    ) %>%
-    add_resource(
-        "server",
-        capacity = M,
-        queue_size = m2
-    ) %>%
-    add_generator("program", queue, function() rexp(1, 1 / (K * lambda))) %>%
-    run(until = SIMULATION_TIME)
+envs <- mclapply(1:30, function(i) {
+    env <- simmer("SuperDuperSim", log_level = 2)
+
+    programmers_source <- trajectory("programmers source path") %>%
+            set_source("program", function() {
+                number_of_free_programmers <- get_global(env, "number_of_free_programmers")
+
+                if (number_of_free_programmers <= 0) {
+                    return(0.5)
+                } else {
+                    return(rexp(1, lambda * number_of_free_programmers))
+                }
+            })
+
+    programmers_path <- trajectory("program's path") %>%
+            join(antivirus_server_path) %>%
+            set_global("number_of_free_programmers", function() {
+                on_server <- get_server_count(env, resources = c('antivirus_server', 'server'))
+                in_queue <- get_queue_count(env, resources = c('antivirus_server', 'server'))
+
+                in_system <- sum(on_server) + sum(in_queue)
+
+                number_of_free_programmers <- K - in_system
+
+                return(number_of_free_programmers)
+            }) %>%
+            join(programmers_source) %>%
+            join(main_server) %>%
+            set_global("number_of_free_programmers", value = 1, mod = "+") %>%
+            join(programmers_source)
+
+    return(env %>%
+        add_resource(
+            "antivirus_server",
+            capacity = N,
+            queue_size = m1
+        ) %>%
+        add_resource(
+            "server",
+            capacity = M,
+            queue_size = m2
+        ) %>%
+        add_generator(
+            "program",
+            programmers_path,
+            function() rexp(1, K * lambda)
+        ) %>%
+        run(until = SIMULATION_TIME) %>%
+        wrap()
+    )
+})
 
 # %%
-arrivals <- get_mon_arrivals(env)
+arrivals <- get_mon_arrivals(envs)
 arrivals
 
 # %% [markdown]
 # Логи симуляции:
 
 # %%
-resources <- get_mon_resources(env)
+resources <- get_mon_resources(envs)
 resources
 
 # %% [markdown]
 # #### Абсолютную пропускную способность
 # Абсолютную пропускную способность найдем следующим образом:
-# %%
-number_of_unfinished <- arrivals %>% with(sum(!finished))
-number_of_unfinished
 
 # %%
-finish_probability <- number_of_unfinished / nrow(arrivals)
+number_of_finished <- arrivals %>% with(sum(finished))
+number_of_finished
+
+# %%
+finish_probability <- number_of_finished / nrow(arrivals)
 finish_probability
 
 # %%
@@ -391,7 +422,7 @@ T
 # $$
 
 # %% [markdown]
-# Пусть $\mu_{\text{общ}} = \frac{\lambda'}{2}$. Тогда:
+# Пусть $\mu_{\text{общ}} = 0.1 < \lambda'$. Тогда:
 
 # %%
 mu_ <- 0.1
