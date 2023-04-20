@@ -95,18 +95,29 @@ W0
 
 # %%
 get_Wqueue <- function(p) {
-    num <- ro[p] / mu[p]
-    den <- 1 - sum(ro[p:P])
+    numerator <- ro[p] / mu[p]
+    denominator <- 1 - sum(ro[p:P])
 
     if (p == P) {
-        return(num / den)
+        return(numerator / denominator)
     }
 
+    sum_part1 <- sum(unlist(
+        lapply(
+            c((p + 1):P),
+            function(i) ro[i] * (1 / mu[p] + 1 / mu[i])
+        )
+    ))
 
-    add1 <- sum(unlist(lapply(c((p + 1):P), function(i) ro[i] * (1 / mu[p] + 1 / mu[i]))))
-    add2 <- sum(unlist(lapply(c((p + 1):P), function(i) ro[i] * get_Wqueue(i))))
+    sum_part2 <- sum(unlist(
+        lapply(
+            c((p + 1):P),
+            function(i) ro[i] * get_Wqueue(i)
+        )
+    ))
 
-    result <- (num + add1 + add2) / den
+    result <- (numerator + sum_part1 + sum_part2) / denominator
+
 
     if (result < 0) {
         return(Inf)
@@ -204,6 +215,6 @@ results
 
 # %% [markdown]
 # ### Вывод
-# Как видно, теоретически вычисленное значение с некоторой точностью совпадает
-# со значением, полученным теоретически. При увеличении количества
+# Как видно, теоретически вычисленные значения с некоторой точностью совпадают
+# со значениями, полученными теоретически. При увеличении количества
 # экспериментов 𝑁 точность только увеличивается.
