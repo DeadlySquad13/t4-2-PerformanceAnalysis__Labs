@@ -69,7 +69,7 @@ lambda_
 # %%
 ro <- lambda / mu
 
-mu_ <- lambda_ * sum(ro)
+mu_ <- sum(ro) / lambda_
 mu_
 
 
@@ -205,12 +205,13 @@ arrivals["activity_time"][is.na(arrivals["activity_time"])] <- 0
 # Разделим заявки по приоритету и подсчитаем для каждого набора данных время:
 
 # %%
-patterns <- lapply(1:P, function(i) paste("documents", 1))
+patterns <- lapply(1:P, function(i) paste("documents", i, sep = ""))
 
-results$practical <- lapply(A, function(pattern) {
+results$practical <- lapply(patterns, function(pattern) {
     arrivals[grepl(arrivals$name, pattern = pattern, fixed = TRUE), ] %>%
         with(mean(end_time - activity_time - start_time))
 })
+patterns
 results
 
 # %% [markdown]
